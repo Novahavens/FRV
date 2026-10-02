@@ -177,7 +177,7 @@ Without Supabase configured, the app renders the Coppell reference claim and say
 To run against a real database:
 
 ```bash
-psql "$DATABASE_URL" -f supabase/migrations/0001_init.sql
+for f in supabase/migrations/*.sql; do psql "$DATABASE_URL" -f "$f"; done
 psql "$DATABASE_URL" -f supabase/seed.sql      # optional reference claim
 ```
 
