@@ -1,10 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  experimental: {
-    // The calculation is deterministic and server-side; keep payloads small.
-    typedRoutes: true,
-  },
+  // react-pdf ships Node-only internals; keep it out of the server bundle graph.
+  serverExternalPackages: ['@react-pdf/renderer'],
 };
 
 export default nextConfig;
