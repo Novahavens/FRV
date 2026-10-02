@@ -9,7 +9,7 @@ import { z } from 'zod';
 const schema = z.object({
   NEXT_PUBLIC_SUPABASE_URL: z.string().url(),
   SUPABASE_SERVICE_ROLE_KEY: z.string().min(1),
-  RENTCAST_API_KEY: z.string().optional(),
+  FIRECRAWL_API_KEY: z.string().optional(),
 });
 
 export type Env = z.infer<typeof schema>;
@@ -22,7 +22,7 @@ export function env(): Env {
   const parsed = schema.safeParse({
     NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
     SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
-    RENTCAST_API_KEY: process.env.RENTCAST_API_KEY,
+    FIRECRAWL_API_KEY: process.env.FIRECRAWL_API_KEY,
   });
 
   if (!parsed.success) {

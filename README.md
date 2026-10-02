@@ -155,7 +155,7 @@ This runs through **Firecrawl's catalogued Zillow capability**, approved by Will
 - **Expired listings are refused.** A comp that is no longer for rent is not evidence.
 - **The data remains Zillow's.** Records carry an attribution string, and any report built from them prints it.
 
-Zillow itself has offered no public API since September 2021, and its partner programme requires MLS membership. Lookup is one environment variable away from off — `LISTING_PROVIDER=manual` — and the form works identically either way. A licensed provider can replace Firecrawl by implementing `ListingProvider` without touching the form, the engine or the report.
+Zillow itself has offered no public API since September 2021, and its partner programme requires MLS membership. Lookup runs when `FIRECRAWL_API_KEY` is set; without it the form works identically with manual entry. A licensed provider can replace Firecrawl by implementing `ListingProvider` without touching the form, the engine or the report.
 
 ## The report
 

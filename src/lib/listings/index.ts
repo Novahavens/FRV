@@ -5,11 +5,8 @@ import type { ListingProvider, LookupResult } from './types';
 export type { ListingFacts, LookupResult, ListingSource } from './types';
 
 /**
- * The configured listing provider, or a manual one that politely declines.
- *
- * One env var turns enrichment on or off. If a licensed source is approved
- * later, it implements ListingProvider and replaces Firecrawl here without
- * any change to the form, the engine or the report.
+ * Firecrawl when FIRECRAWL_API_KEY is set, otherwise a manual provider that
+ * politely declines and the form falls back to hand entry.
  */
 const manual: ListingProvider = {
   name: 'manual',
@@ -20,6 +17,5 @@ const manual: ListingProvider = {
 
 export function listingProvider(): ListingProvider {
   const key = process.env.FIRECRAWL_API_KEY;
-  const enabled = (process.env.LISTING_PROVIDER ?? 'firecrawl') === 'firecrawl';
-  return enabled && key ? createFirecrawlProvider(key) : manual;
+  return key ? createFirecrawlProvider(key) : manual;
 }

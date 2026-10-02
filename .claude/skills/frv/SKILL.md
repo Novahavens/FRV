@@ -22,6 +22,6 @@ FRV = (base comp rent × term multiplier) + furniture + management fee, applied 
 - `renderToBuffer(createElement(Doc))` needs a cast to `ReactElement<DocumentProps>` under strict TS.
 - `/api/health` returns 503 until Supabase env vars are set — expected. App still renders a clearly-labelled demo claim.
 - Build must succeed with no secrets; env is validated at runtime in `src/lib/env.ts`.
-- Env vars: `NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `LISTING_PROVIDER` (`firecrawl`|`manual`), `FIRECRAWL_API_KEY`.
+- Env vars: `NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `FIRECRAWL_API_KEY` (optional; empty = manual entry). No LISTING_PROVIDER var — Firecrawl is the only provider.
 - Deploy: Vercel project `frv` (team nova-havens) auto-deploys from `main`. DB: run `supabase/migrations/0001_init.sql`, optional `seed.sql`.
 - Flow: branch → PR → CI (`ci.yml`, npm ci) → merge to main → Vercel deploys.
