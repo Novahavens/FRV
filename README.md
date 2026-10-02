@@ -166,9 +166,9 @@ The guideline tables on the page are generated from the same constants the engin
 ## Quick start
 
 ```bash
-git clone https://github.com/<org>/FRV.git && cd FRV
+git clone https://github.com/Novahavens/FRV.git && cd FRV
 cp .env.example .env.local
-npm install
+npm ci
 npm run dev
 ```
 
