@@ -1,0 +1,153 @@
+/* Nova Havens FRV — design tokens.
+   Generated from the design system. Do not hand-edit values here; change the
+   system and re-export, or you get drift between the app and the report. */
+
+:root,
+:root[data-theme='light'] {
+  --surface-base: #ffffff;
+  --surface-sunken: #fafafa;
+  --surface-raised: #ffffff;
+  --surface-overlay: #ffffff;
+  --border-subtle: #ebebeb;
+  --border-default: #d4d4d4;
+  --border-strong: #8f8f8f;
+  --ink-primary: #0a0a0a;
+  --ink-secondary: #525252;
+  --ink-tertiary: #707070;
+  --ink-inverse: #ffffff;
+  --accent-base: #276ef1;
+  --accent-hover: #1b57c4;
+  --accent-subtle: #edf3fe;
+  --accent-ink: #1b57c4;
+  --pass-base: #05803b;
+  --pass-subtle: #e8f6ee;
+  --pass-ink: #046130;
+  --warn-base: #b25e09;
+  --warn-subtle: #fdf2e5;
+  --warn-ink: #8a4708;
+  --block-base: #c81e1e;
+  --block-subtle: #fdecec;
+  --block-ink: #a11414;
+  --lock-base: #5b4cc4;
+  --lock-subtle: #efedfb;
+  --lock-ink: #443790;
+  --focus-ring: #276ef1;
+  --shadow-overlay: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --surface-base: #0a0a0a;
+    --surface-sunken: #000000;
+    --surface-raised: #171717;
+    --surface-overlay: #1f1f1f;
+    --border-subtle: #262626;
+    --border-default: #333333;
+    --border-strong: #666666;
+    --ink-primary: #ededed;
+    --ink-secondary: #a1a1a1;
+    --ink-tertiary: #8a8a8a;
+    --ink-inverse: #0a0a0a;
+    --accent-base: #5b96ff;
+    --accent-hover: #7dabff;
+    --accent-subtle: #101f38;
+    --accent-ink: #a8c8ff;
+    --pass-base: #34c77b;
+    --pass-subtle: #0c2a1b;
+    --pass-ink: #6ee7a8;
+    --warn-base: #e8a33d;
+    --warn-subtle: #33240c;
+    --warn-ink: #f5c77e;
+    --block-base: #f16c6c;
+    --block-subtle: #3a1616;
+    --block-ink: #fb9a9a;
+    --lock-base: #8b7cf0;
+    --lock-subtle: #1e1a3d;
+    --lock-ink: #b4a8ff;
+    --focus-ring: #5b96ff;
+    --shadow-overlay: 0 8px 24px rgba(0, 0, 0, 0.6);
+  }
+}
+
+:root[data-theme='dark'] {
+  --surface-base: #0a0a0a;
+  --surface-sunken: #000000;
+  --surface-raised: #171717;
+  --surface-overlay: #1f1f1f;
+  --border-subtle: #262626;
+  --border-default: #333333;
+  --border-strong: #666666;
+  --ink-primary: #ededed;
+  --ink-secondary: #a1a1a1;
+  --ink-tertiary: #8a8a8a;
+  --ink-inverse: #0a0a0a;
+  --accent-base: #5b96ff;
+  --accent-hover: #7dabff;
+  --accent-subtle: #101f38;
+  --accent-ink: #a8c8ff;
+  --pass-base: #34c77b;
+  --pass-subtle: #0c2a1b;
+  --pass-ink: #6ee7a8;
+  --warn-base: #e8a33d;
+  --warn-subtle: #33240c;
+  --warn-ink: #f5c77e;
+  --block-base: #f16c6c;
+  --block-subtle: #3a1616;
+  --block-ink: #fb9a9a;
+  --lock-base: #8b7cf0;
+  --lock-subtle: #1e1a3d;
+  --lock-ink: #b4a8ff;
+  --focus-ring: #5b96ff;
+  --shadow-overlay: 0 8px 24px rgba(0, 0, 0, 0.6);
+}
+
+:root {
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 10px;
+  --radius-full: 999px;
+
+  --font-sans: var(--font-geist-sans), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  color-scheme: light dark;
+}
+
+*,
+*::before,
+*::after { box-sizing: border-box; }
+
+html, body { padding: 0; margin: 0; }
+
+body {
+  background: var(--surface-sunken);
+  color: var(--ink-primary);
+  font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 22px;
+  -webkit-font-smoothing: antialiased;
+}
+
+:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+.mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
