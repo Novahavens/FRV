@@ -163,7 +163,7 @@ export function ClaimForm() {
   }, [claimIdentifier, address, lat, lng, bedrooms, bathrooms, sqft, termMonths, managementFee]);
 
   const readyComps: Comp[] | null = useMemo(() => {
-    const built = comps.map((c, i) => {
+    const built = comps.map((c, i): Comp | null => {
       const rentCents = parseMoneyToCents(c.rent);
       if (!c.address || rentCents == null || !c.sqft || !c.lat || !c.lng) return null;
       return {
@@ -171,7 +171,7 @@ export function ClaimForm() {
         rentCents, bedrooms: num(c.bedrooms), bathrooms: num(c.bathrooms),
         sqft: num(c.sqft), furnished: c.furnished, lat: num(c.lat), lng: num(c.lng),
         source: c.source,
-      } satisfies Comp;
+      };
     });
     return built.every((c): c is Comp => c !== null) ? built : null;
   }, [comps]);

@@ -1,5 +1,5 @@
-import { renderToBuffer } from '@react-pdf/renderer';
-import { createElement } from 'react';
+import { renderToBuffer, type DocumentProps } from '@react-pdf/renderer';
+import { createElement, type ReactElement } from 'react';
 import { buildReportModel } from '@/lib/report/model';
 import { ReportDocument } from '@/components/report/ReportDocument';
 import { ClaimNotFoundError, NotLockedError, loadLockedClaim } from '@/lib/db/claims';
@@ -32,7 +32,9 @@ export async function GET(
       attribution: claim.attribution,
     });
 
-    const buffer = await renderToBuffer(createElement(ReportDocument, { model }));
+    const buffer = await renderToBuffer(
+      createElement(ReportDocument, { model }) as unknown as ReactElement<DocumentProps>,
+    );
     const filename = `FRV-${model.claimIdentifier.replace(/[^A-Za-z0-9-]/g, '-')}.pdf`;
 
     return new Response(new Uint8Array(buffer), {
