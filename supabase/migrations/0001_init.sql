@@ -149,7 +149,8 @@ begin
       message = 'This FRV is locked.',
       hint    = 'Request a revision with a documented reason. A revision creates a new version and leaves this one readable.';
   end if;
-  return new;
+  -- NEW is null in a DELETE trigger; returning it would silently skip the delete.
+  return coalesce(new, old);
 end;
 $$;
 
