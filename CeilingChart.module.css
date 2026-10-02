@@ -1,0 +1,23 @@
+.wrap { margin: 0; display: flex; flex-direction: column; gap: var(--space-3); }
+.svg { width: 100%; height: auto; display: block; }
+
+.bar { fill: var(--accent-base); }
+/* Descending weight: the highest comp reads strongest, matching high-to-low. */
+.bar:nth-of-type(1) { fill-opacity: 1; }
+
+.floor { stroke: var(--border-subtle); stroke-width: 1; }
+.ceiling { stroke: var(--lock-base); stroke-width: 1.5; stroke-dasharray: 4 4; }
+
+.tick {
+  fill: var(--ink-tertiary);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-anchor: middle;
+}
+
+.caption {
+  font-size: 13px;
+  line-height: 20px;
+  color: var(--ink-tertiary);
+  max-width: 48ch;
+}
