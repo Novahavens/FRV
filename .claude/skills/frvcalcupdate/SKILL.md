@@ -22,20 +22,14 @@ Every change here is a **methodology or carrier-facing change**, not a code chan
 
 ## Recipe: Multiplier tiers
 
-**File:** `src/lib/frv/constants.ts` → `MULTIPLIER_TIERS`.
+**Defaults:** `src/lib/frv/constants.ts` → `MULTIPLIER_TIERS` (Oct 2026: 1.5 / 1.375 / 1.3125 / 1.125 / 1.0 — every markup is legacy × 1.25). `LEGACY_MULTIPLIER_TIERS` is the original schedule; keep it, it reads old rows and anchors the reference fixtures.
 
-```ts
-{ maxMonths: 2, multiplier: 1.4 },   // 1–2 months → 40%
-{ maxMonths: 5, multiplier: 1.3 },   // 3–5 → 30%
-{ maxMonths: 9, multiplier: 1.25 },  // 6–9 → 25%  ← Drive template says 24%; it's wrong
-{ maxMonths: 11, multiplier: 1.1 },  // 10–11 → 10%
-{ maxMonths: Infinity, multiplier: 1.0 },
-```
+**Per-claim override:** the intake form (`ClaimForm.tsx`, "Short-term multipliers" card) edits the five percentages; boundaries are fixed. The schedule travels in the payload as `multiplierTiers` (`tiersToStored`, open-ended tier `maxMonths: null`), is validated server-side by `tiersFromStored → assertValidTiers` (ascending, last open-ended, 1.00 ≤ m ≤ 5.00), used by `calculateFrv`, stored in `calculations.multiplier_tiers`, and printed via `model.ts → multiplierTable` (`tierLabel`/`markupLabel`).
 
-- Tiers are scanned in order by `multiplierForTerm()` (`multiplier.ts`); keep `maxMonths` ascending and the last one `Infinity`.
-- The report's "Short-term rental multipliers" table is **generated** from this array in `model.ts` (`multiplierTable`), labels included — no edit needed there.
-- Fixture impact: Coppell uses the 3-month tier (×1.30); Camarillo uses 2 months (×1.40). Changing either tier moves a fixture.
-- Tests to touch: `calculate.test.ts` → `describe('multiplier tiers')` and the two fixture blocks; `report.test.ts` → `'derives the multiplier table from the engine'`.
+- Changing a **default**: edit `MULTIPLIER_TIERS` only. Tests: `'multiplier tiers — defaults'` in `calculate.test.ts` (per-term table + the "+25% on legacy" assertion — update or remove that assertion deliberately) and the defaults row in `report.test.ts`.
+- Changing **boundaries** (e.g. a 4–6 month tier): edit both `MULTIPLIER_TIERS` and `LEGACY_MULTIPLIER_TIERS`' *shape* only if the form must show the new rows (the form builds its rows from `MULTIPLIER_TIERS`); stored rows keep their own shape. `tierLabel` derives labels, so no copy to update.
+- Making boundaries editable too: extend the card to edit `maxMonths`, keep `assertValidTiers` as the gate.
+- Fixture impact: the Coppell/Camarillo tests pass `LEGACY_MULTIPLIER_TIERS` explicitly and should not move when defaults change. If they move, the arithmetic changed.
 
 ## Recipe: Furniture rates
 

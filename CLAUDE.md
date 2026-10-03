@@ -34,7 +34,7 @@ Database: apply `supabase/migrations/*.sql` in order, then optionally `supabase/
 
 **`src/lib/frv/` is a pure island.** No React, Next, Supabase or network imports. The browser (`ClaimForm.tsx`) and the server action (`claims/new/actions.ts`) run the *same* `calculateFrv()`; the server always recomputes on submit and that result is what gets stored. `index.ts` re-exports everything — import from `@/lib/frv`.
 
-- `constants.ts` — the locked methodology (multiplier tiers, furniture by bedroom, 5-mile cap, 15% sqft tolerance). Changing a value needs Lou's sign-off. The 6–9 month tier is **25%**; a Drive template saying 24% is wrong and a test asserts this.
+- `constants.ts` — the methodology defaults (multiplier tiers, furniture by bedroom, 5-mile cap, 15% sqft tolerance). Changing a value needs Lou's sign-off. **Multiplier tiers are defaults, editable per claim** (Oct 2026): `LossProperty.multiplierTiers` overrides them, `calculateFrv` validates via `assertValidTiers`, the schedule used is returned on `Calculation.multiplierTiers`, stored in `calculations.multiplier_tiers` (jsonb, open-ended tier as `maxMonths: null` via `tiersToStored`/`tiersFromStored`) and printed on the report. `LEGACY_MULTIPLIER_TIERS` is the pre-Oct-2026 schedule, used to read rows stored without one.
 - `validate.ts` → `calculate.ts` — `calculateFrv` re-runs `validate()` and **throws `ValidationFailedError`** on any blocking event rather than returning a figure with a caveat.
 - `money.ts` — all money is **integer cents** (`Cents`). Dollars exist only in `parseMoneyToCents` / `formatCents`. Rounding is half-away-from-zero (matches a calculator), not banker's.
 
@@ -57,9 +57,9 @@ Read `docs/DECISIONS.md` before "fixing" any of these:
 - The evaluation-note wording about amenities is reproduced verbatim from reference reports despite the tool having no amenity fields (open with Will).
 - Not built on purpose: comp discovery, maps, amenity fields, insured-facing views.
 
-## Fixtures that must hold to the cent
+## Reference fixtures
 
-`tests/calculate.test.ts` and `tests/report.test.ts` pin the PRD reference reports: **Coppell TX (3 comps, 3 months) = $6,448.50** and **Camarillo CA (2 months) = $10,145**. If either moves by a cent, the methodology changed — stop and confirm.
+`tests/calculate.test.ts` and `tests/report.test.ts` compute the PRD reference reports **under `LEGACY_MULTIPLIER_TIERS`**: Coppell TX = $6,448.50, Camarillo CA = $10,145. They are arithmetic regressions, not methodology gates — if they move, the *engine* changed, not the schedule. Default-schedule behaviour is asserted separately (every markup = legacy × 1.25).
 
 ## Deployment notes
 

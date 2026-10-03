@@ -1,6 +1,9 @@
 import { db } from './client';
 import {
+  LEGACY_MULTIPLIER_TIERS,
   calculateFrv,
+  tiersFromStored,
+  tiersToStored,
   type Calculation,
   type Comp,
   type EvaluatedComp,
@@ -51,6 +54,7 @@ interface CalcRow {
   version: number; multiplier: number; furniture_cents: number; mgmt_fee_cents: number;
   per_comp_frv_cents: number[]; averaged_base_rent_cents: number;
   averaged_frv_cents: number; frv_12mo_cents: number;
+  multiplier_tiers: Array<{ maxMonths: number | null; multiplier: number }> | null;
 }
 
 const toLoss = (row: ClaimRow): LossProperty => ({
@@ -128,6 +132,8 @@ export async function loadLockedClaim(claimId: string): Promise<StoredClaim> {
     loss: toLoss(claim),
     calculation: {
       multiplier: Number(calc.multiplier),
+      // Rows written before schedules were stored used the legacy defaults.
+      multiplierTiers: calc.multiplier_tiers ? tiersFromStored(calc.multiplier_tiers) : [...LEGACY_MULTIPLIER_TIERS],
       furnitureCents: calc.furniture_cents,
       managementFeeCents: calc.mgmt_fee_cents,
       comps: evaluated,
@@ -164,6 +170,7 @@ export async function submitAndLock(
     claim_id: claimId,
     version,
     multiplier: calculation.multiplier,
+    multiplier_tiers: tiersToStored(calculation.multiplierTiers),
     furniture_cents: calculation.furnitureCents,
     mgmt_fee_cents: calculation.managementFeeCents,
     per_comp_frv_cents: calculation.comps.map((c) => c.frvCents),

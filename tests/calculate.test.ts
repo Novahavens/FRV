@@ -1,11 +1,17 @@
 import { describe, expect, it } from 'vitest';
 import {
+  LEGACY_MULTIPLIER_TIERS,
+  MULTIPLIER_TIERS,
   ValidationFailedError,
+  assertValidTiers,
   calculateFrv,
   formatCents,
+  markupLabel,
   multiplierForTerm,
   parseMoneyToCents,
   sortHighToLow,
+  tiersFromStored,
+  tiersToStored,
   validate,
 } from '@/lib/frv';
 import type { Comp, LossProperty } from '@/lib/frv';
@@ -20,6 +26,8 @@ const coppellLoss: LossProperty = {
   sqft: 2100,
   termMonths: 3,
   managementFeeCents: 240_00,
+  // The PRD's reference figures were produced under the original schedule.
+  multiplierTiers: LEGACY_MULTIPLIER_TIERS,
 };
 
 /** Coordinates nudged to sit inside the clean radius band. */
@@ -34,27 +42,80 @@ const comp = (over: Partial<Comp> & Pick<Comp, 'id' | 'rentCents' | 'sqft'>): Co
   ...over,
 });
 
-describe('multiplier tiers', () => {
+describe('multiplier tiers — defaults (October 2026, +25% on every markup)', () => {
   it.each([
-    [1, 1.4], [2, 1.4],
-    [3, 1.3], [5, 1.3],
-    [6, 1.25], [9, 1.25],
-    [10, 1.1], [11, 1.1],
+    [1, 1.5], [2, 1.5],
+    [3, 1.375], [5, 1.375],
+    [6, 1.3125], [9, 1.3125],
+    [10, 1.125], [11, 1.125],
     [12, 1.0], [24, 1.0],
   ])('term of %i months → ×%f', (months, expected) => {
     expect(multiplierForTerm(months)).toBe(expected);
   });
 
-  it('is 25% at the 6-9 tier, not the 24% in the blank Drive template', () => {
-    expect(multiplierForTerm(7)).toBe(1.25);
+  it('is exactly 25% more aggressive than the legacy schedule at every tier', () => {
+    MULTIPLIER_TIERS.forEach((tier, i) => {
+      const legacyMarkup = LEGACY_MULTIPLIER_TIERS[i]!.multiplier - 1;
+      expect(tier.multiplier - 1).toBeCloseTo(legacyMarkup * 1.25, 10);
+    });
+  });
+
+  it('still honours the legacy schedule when a claim carries it', () => {
+    expect(multiplierForTerm(7, LEGACY_MULTIPLIER_TIERS)).toBe(1.25);
+    expect(multiplierForTerm(2, LEGACY_MULTIPLIER_TIERS)).toBe(1.4);
   });
 
   it('refuses a term below one month rather than guessing', () => {
     expect(() => multiplierForTerm(0)).toThrow(RangeError);
   });
+
+  it('prints half-points instead of rounding them away', () => {
+    expect(markupLabel(1.375)).toBe('37.5%');
+    expect(markupLabel(1.3125)).toBe('31.25%');
+    expect(markupLabel(1)).toBe('No markup');
+  });
 });
 
-describe('Coppell — three comps, three-month term (PRD 12.1)', () => {
+describe('operator-entered schedules', () => {
+  it('rejects a markdown, a non-ascending boundary and a bounded last tier', () => {
+    expect(() => assertValidTiers([{ maxMonths: 2, multiplier: 0.9 }, { maxMonths: Infinity, multiplier: 1 }])).toThrow(RangeError);
+    expect(() => assertValidTiers([{ maxMonths: 5, multiplier: 1.2 }, { maxMonths: 2, multiplier: 1.1 }, { maxMonths: Infinity, multiplier: 1 }])).toThrow(RangeError);
+    expect(() => assertValidTiers([{ maxMonths: 2, multiplier: 1.2 }, { maxMonths: 12, multiplier: 1 }])).toThrow(RangeError);
+  });
+
+  it('round-trips through JSON with the open-ended tier as null', () => {
+    const stored = tiersToStored(MULTIPLIER_TIERS);
+    expect(stored.at(-1)).toEqual({ maxMonths: null, multiplier: 1 });
+    expect(tiersFromStored(stored)).toEqual(MULTIPLIER_TIERS);
+  });
+
+  it('changes the figure and is reported back on the calculation', () => {
+    const comps = [
+      comp({ id: 'c1', rentCents: 3_835_00, sqft: 2250 }),
+      comp({ id: 'c2', rentCents: 3_600_00, sqft: 2100 }),
+      comp({ id: 'c3', rentCents: 3_200_00, sqft: 1900 }),
+    ];
+    const custom = [{ maxMonths: 5, multiplier: 2 }, { maxMonths: Infinity, multiplier: 1 }];
+    const result = calculateFrv({ ...coppellLoss, multiplierTiers: custom }, comps);
+    expect(result.multiplier).toBe(2);
+    expect(result.multiplierTiers).toEqual(custom);
+    // 3,545 × 2 + 1,600 + 240
+    expect(result.averagedFrvCents).toBe(8_930_00);
+  });
+
+  it('uses the defaults when a claim carries no schedule', () => {
+    const { multiplierTiers: _omit, ...plain } = coppellLoss;
+    const result = calculateFrv(plain, [
+      comp({ id: 'c1', rentCents: 3_835_00, sqft: 2250 }),
+      comp({ id: 'c2', rentCents: 3_600_00, sqft: 2100 }),
+      comp({ id: 'c3', rentCents: 3_200_00, sqft: 1900 }),
+    ]);
+    expect(result.multiplier).toBe(1.375);
+    expect(result.multiplierTiers).toEqual(MULTIPLIER_TIERS);
+  });
+});
+
+describe('Coppell — three comps, three-month term (PRD 12.1, legacy schedule)', () => {
   const comps = [
     comp({ id: 'c1', rentCents: 3_835_00, sqft: 2250 }),
     comp({ id: 'c2', rentCents: 3_600_00, sqft: 2100 }),
@@ -105,6 +166,7 @@ describe('Camarillo — two-month term (PRD 12.2)', () => {
     sqft: 2544,
     termMonths: 2,
     managementFeeCents: 145_00,
+    multiplierTiers: LEGACY_MULTIPLIER_TIERS,
   };
   const near = { lat: 34.2189, lng: -119.0401 };
   const comps = [
@@ -113,7 +175,7 @@ describe('Camarillo — two-month term (PRD 12.2)', () => {
     comp({ id: 'c', rentCents: 6_000_00, sqft: 2600, ...near }),
   ];
 
-  it('produces $10,145 — the benchmark the methodology is held to', () => {
+  it('produces $10,145 under the schedule the reference report used', () => {
     const result = calculateFrv(camarilloLoss, comps);
     expect(result.averagedFrvCents).toBe(10_145_00);
     expect(formatCents(result.averagedFrvCents)).toBe('$10,145');

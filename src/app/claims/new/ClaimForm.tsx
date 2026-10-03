@@ -2,15 +2,20 @@
 
 import { useActionState, useMemo, useState, useTransition } from 'react';
 import {
+  MULTIPLIER_TIERS,
   REQUIRED_COMP_COUNT,
   calculateFrv,
   formatCents,
+  markupLabel,
   parseListingUrl,
   parseMoneyToCents,
+  tierLabel,
+  tiersToStored,
   validate,
   type Calculation,
   type Comp,
   type LossProperty,
+  type MultiplierTier,
 } from '@/lib/frv';
 import { Button, Field, RuleBanner } from '@/components/ui/primitives';
 import { FrvSummary } from '@/components/frv/FrvSummary';
@@ -70,6 +75,20 @@ export function ClaimForm() {
   const [termMonths, setTermMonths] = useState('3');
   const [managementFee, setManagementFee] = useState('240');
   const [justification, setJustification] = useState('');
+
+  /**
+   * The multiplier schedule, as percentage markups the operator can edit.
+   * Boundaries are fixed; the percentages are not. Whatever is entered is used
+   * for the live figure, recomputed on the server, stored with the calculation
+   * and printed on the report's guideline table.
+   */
+  const defaultMarkups = () => MULTIPLIER_TIERS.map((t) => String(Math.round((t.multiplier - 1) * 10_000) / 100));
+  const [markups, setMarkups] = useState<string[]>(defaultMarkups);
+  const markupsAreDefault = markups.every((m, i) => m === defaultMarkups()[i]);
+  const tiers: MultiplierTier[] | null = useMemo(() => {
+    const built = MULTIPLIER_TIERS.map((t, i) => ({ maxMonths: t.maxMonths, multiplier: 1 + num(markups[i] ?? '') / 100 }));
+    return built.every((t) => Number.isFinite(t.multiplier) && t.multiplier >= 1 && t.multiplier <= 5) ? built : null;
+  }, [markups]);
 
   const [comps, setComps] = useState<CompDraft[]>(() =>
     Array.from({ length: REQUIRED_COMP_COUNT }, emptyComp),
@@ -150,7 +169,7 @@ export function ClaimForm() {
 
   const loss: LossProperty | null = useMemo(() => {
     const parsedFee = parseMoneyToCents(managementFee);
-    if (!address || !lat || !lng || !sqft || parsedFee == null) return null;
+    if (!address || !lat || !lng || !sqft || parsedFee == null || !tiers) return null;
     const draft = {
       claimIdentifier: claimIdentifier || 'Untitled claim',
       address,
@@ -161,8 +180,8 @@ export function ClaimForm() {
     };
     return Object.values(draft).some((v) => typeof v === 'number' && Number.isNaN(v))
       ? null
-      : draft;
-  }, [claimIdentifier, address, lat, lng, bedrooms, bathrooms, sqft, termMonths, managementFee]);
+      : { ...draft, multiplierTiers: tiers };
+  }, [claimIdentifier, address, lat, lng, bedrooms, bathrooms, sqft, termMonths, managementFee, tiers]);
 
   /**
    * Find comps near the loss.
@@ -231,7 +250,14 @@ export function ClaimForm() {
 
   const payload = JSON.stringify(
     loss && readyComps
-      ? { ...loss, preparedBy: preparedBy.trim(), justification, comps: readyComps.map(({ id: _id, ...c }) => c) }
+      ? {
+          ...loss,
+          // JSON has no Infinity; the open-ended tier travels as maxMonths null.
+          multiplierTiers: tiersToStored(loss.multiplierTiers ?? MULTIPLIER_TIERS),
+          preparedBy: preparedBy.trim(),
+          justification,
+          comps: readyComps.map(({ id: _id, ...c }) => c),
+        }
       : {},
   );
 
@@ -269,6 +295,37 @@ export function ClaimForm() {
           <Field id="loss-fee" label="Monthly management fee" value={managementFee} prefix="$" mono
             onChange={(e) => setManagementFee(e.target.value)}
             helper="Default $240. Zero is permitted on standard sourcing." />
+        </section>
+
+        <section className={styles.card} aria-labelledby="multipliers-title">
+          <div className={styles.findRow}>
+            <div>
+              <h2 id="multipliers-title" className={styles.cardTitle}>Short-term multipliers</h2>
+              <p className={styles.findNote}>
+                Markup on base rent by approved term. Edit any tier; the figure updates, and the
+                schedule you use is stored with the claim and printed on the report.
+              </p>
+            </div>
+            <Button type="button" variant="ghost" size="sm" onClick={() => setMarkups(defaultMarkups())}
+              disabled={markupsAreDefault}>
+              Reset to defaults
+            </Button>
+          </div>
+          <div className={styles.tiers}>
+            {MULTIPLIER_TIERS.map((t, i) => (
+              <Field key={t.maxMonths} id={`tier-${i}`} label={tierLabel(MULTIPLIER_TIERS, i)} value={markups[i] ?? ''}
+                mono inputMode="decimal" prefix="%"
+                onChange={(e) => setMarkups((prev) => prev.map((m, j) => (j === i ? e.target.value : m)))}
+                helper={tiers ? `× ${tiers[i]!.multiplier.toFixed(4).replace(/\.?0+$/, '')}` : undefined}
+                error={tiers ? undefined : 'Each markup must be a number from 0 to 400.'} />
+            ))}
+          </div>
+          {!markupsAreDefault && tiers && (
+            <p className={styles.findNote}>
+              Custom schedule: {tiers.map((t, i) => `${tierLabel(MULTIPLIER_TIERS, i)} ${markupLabel(t.multiplier)}`).join(' · ')}.
+              Defaults are {MULTIPLIER_TIERS.map((t) => markupLabel(t.multiplier)).join(' / ')}.
+            </p>
+          )}
         </section>
 
         <section className={styles.card} aria-labelledby="find-comps-title">
