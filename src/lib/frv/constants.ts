@@ -1,19 +1,40 @@
-import type { Cents } from './types';
+import type { Cents, MultiplierTier } from './types';
 
 /**
  * PRD section 4. Every value here is a decision on record, made by Lou.
  * Changing a number in this file is a methodology change, not a code change —
- * it requires her sign-off and it will break the fixtures in tests/.
+ * it requires her sign-off.
  */
 
-/** Short-term multiplier tiers, applied to base unfurnished rent. */
-export const MULTIPLIER_TIERS = [
+/**
+ * Default short-term multiplier tiers, applied to base unfurnished rent.
+ *
+ * These are the DEFAULTS. Since October 2026 the schedule is editable per
+ * claim on the intake form, and the schedule actually used is stored with the
+ * calculation and printed on the report. Approved by Lou, October 2026: every
+ * markup is 25% higher than the original schedule (40 → 50, 30 → 37.5,
+ * 25 → 31.25, 10 → 12.5). Twelve months and beyond stays at no markup.
+ */
+export const MULTIPLIER_TIERS: readonly MultiplierTier[] = [
+  { maxMonths: 2, multiplier: 1.5 },
+  { maxMonths: 5, multiplier: 1.375 },
+  { maxMonths: 9, multiplier: 1.3125 },
+  { maxMonths: 11, multiplier: 1.125 },
+  { maxMonths: Infinity, multiplier: 1.0 },
+];
+
+/**
+ * The schedule in force before October 2026. Kept for reading calculations
+ * stored without their own schedule, and as the arithmetic reference the PRD's
+ * example reports were produced with.
+ */
+export const LEGACY_MULTIPLIER_TIERS: readonly MultiplierTier[] = [
   { maxMonths: 2, multiplier: 1.4 },
   { maxMonths: 5, multiplier: 1.3 },
   { maxMonths: 9, multiplier: 1.25 },
   { maxMonths: 11, multiplier: 1.1 },
   { maxMonths: Infinity, multiplier: 1.0 },
-] as const;
+];
 
 /**
  * Flat monthly furniture, housewares and appliances by bedroom count.

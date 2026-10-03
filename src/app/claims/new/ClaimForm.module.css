@@ -37,6 +37,10 @@
 .candidateActions { display: flex; gap: var(--space-1); }
 .attribution { margin: 0; font-size: 11px; color: var(--ink-tertiary); }
 
+.tiers { display: grid; grid-template-columns: repeat(5, 1fr); gap: var(--space-3); }
+@media (max-width: 1000px) { .tiers { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 560px) { .tiers { grid-template-columns: 1fr 1fr; } }
+
 .preview { min-width: 0; }
 .sticky {
   position: sticky; top: var(--space-5);

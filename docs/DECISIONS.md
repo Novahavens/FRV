@@ -38,6 +38,17 @@ Rule 5 is enforced by triggers on `claims`, `comps` and `calculations`, not by h
 
 `calculateFrv` re-runs validation and throws on any blocking rule. A number with a caveat attached does not stop someone sourcing against it; an exception does.
 
+## Multipliers are editable per claim; defaults are +25% (October 2026)
+
+Approved by Lou, October 2026. Two changes, recorded together:
+
+1. **The default schedule moved.** Every markup is 25% higher than the original: 1–2 months 50% (was 40), 3–5 months 37.5% (was 30), 6–9 months 31.25% (was 25), 10–11 months 12.5% (was 10). Twelve months and beyond stays at no markup.
+2. **The schedule is an input, not a constant.** The intake form shows the five tiers as editable percentages, pre-filled with the defaults. Whatever the operator enters is used for the live figure, recomputed on the server, **stored with the calculation** (`calculations.multiplier_tiers`) and printed on the report's guideline table. Tier boundaries are fixed; the percentages are not. Multipliers below 1.00 are rejected — a markdown is not a short-term premium.
+
+Why store the schedule rather than reference the constants: a locked report must keep printing the table its figure was built from, however the defaults move afterwards. Rows written before this change carry no schedule and are read with the legacy one.
+
+**The Coppell and Camarillo reference figures are no longer acceptance gates.** They remain in the suite as arithmetic regressions *under the legacy schedule*, which they pass to the cent. The suite now also asserts the defaults are exactly +25% on the legacy schedule, and that a custom schedule flows through to the figure and the report.
+
 ## Comp search is a shortlist, never a selection (October 2026)
 
 The original decision below excluded `rental_search` outright. That was revisited and approved by Will and Lou in October 2026 on these terms:

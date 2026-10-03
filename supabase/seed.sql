@@ -32,10 +32,12 @@ on conflict do nothing;
 
 -- Figures exactly as PRD 12.1 states them.
 insert into calculations (
-  claim_id, version, multiplier, furniture_cents, mgmt_fee_cents,
+  claim_id, version, multiplier, multiplier_tiers, furniture_cents, mgmt_fee_cents,
   per_comp_frv_cents, averaged_base_rent_cents, averaged_frv_cents, frv_12mo_cents
 ) values (
-  '00000000-0000-4000-8000-000000000001', 1, 1.30, 160000, 24000,
+  '00000000-0000-4000-8000-000000000001', 1, 1.30,
+  '[{"maxMonths":2,"multiplier":1.4},{"maxMonths":5,"multiplier":1.3},{"maxMonths":9,"multiplier":1.25},{"maxMonths":11,"multiplier":1.1},{"maxMonths":null,"multiplier":1.0}]'::jsonb,
+  160000, 24000,
   array[682550, 652000, 600000], 354500, 644850, 378500
 ) on conflict (claim_id, version) do nothing;
 

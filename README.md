@@ -55,13 +55,15 @@ Applied to each of three unfurnished comparables, sorted high to low, then **ave
 <table>
 <tr><td valign="top">
 
-| Approved term | Multiplier |
+| Approved term | Default multiplier |
 |:--|--:|
-| 1 – 2 months | × 1.40 |
-| 3 – 5 months | × 1.30 |
-| 6 – 9 months | × 1.25 |
-| 10 – 11 months | × 1.10 |
+| 1 – 2 months | × 1.50 |
+| 3 – 5 months | × 1.375 |
+| 6 – 9 months | × 1.3125 |
+| 10 – 11 months | × 1.125 |
 | 12 months | × 1.00 |
+
+<sub>Defaults. Editable per claim; the schedule used is stored and printed.</sub>
 
 </td><td valign="top">
 
@@ -80,12 +82,12 @@ Applied to each of three unfurnished comparables, sorted high to low, then **ave
 | Coppell, TX · 3 comps · 3 mo | **$6,448.50** |
 | Camarillo, CA · 2 mo | **$10,145** |
 
-Both are acceptance fixtures.<br>The suite fails if either moves by a cent.
+Under the original schedule, as the PRD reports were.<br>Kept as arithmetic regressions.
 
 </td></tr>
 </table>
 
-Management fee defaults to **$240**, is editable per claim, and accepts zero. The blank template in Drive lists the 6–9 month tier at 24%; that template is wrong, and a test asserts **25%**.
+Management fee defaults to **$240**, is editable per claim, and accepts zero. Multipliers are editable per claim too: the intake form shows the five tiers as percentages, pre-filled with the defaults above (approved by Lou, October 2026 — every markup 25% higher than the original schedule). Whatever is entered is recomputed on the server, stored with the calculation and printed on the report, so the workings an adjuster checks always match the figure.
 
 <br>
 
@@ -291,6 +293,7 @@ Production sits behind Vercel **password protection** rather than Vercel SSO, so
 | `0001_init.sql` | Schema, `check (furnished = false)`, lock triggers, `open_revision()`, RLS |
 | `0002_pin_function_search_path.sql` | Pins `search_path` on every function (Supabase lint 0011) |
 | `0003_fix_claims_guard_return_on_delete.sql` | BEFORE DELETE triggers must return `OLD`, not `NEW` |
+| `0004_calculations_multiplier_tiers.sql` | Stores the multiplier schedule each calculation used |
 
 `open_revision(claim_id, reason, actor, note)` is the one sanctioned route through the lock. It sets a transaction-scoped flag, writes a reason-coded `revisions` row, and reopens the claim at the next version. There is no way to hold the window open.
 
@@ -314,7 +317,7 @@ This repo is set up for [Claude Code](https://claude.ai/code):
 |:--|:--|
 | ✅ | Calculation core, validation, fixtures |
 | ✅ | Schema with trigger-enforced locking and `open_revision()` |
-| ✅ | One-page intake with live figure, Firecrawl listing lookup and *Find comparables* shortlist |
+| ✅ | One-page intake with live figure, editable multiplier schedule, Firecrawl listing lookup and *Find comparables* shortlist |
 | ✅ | Report — web preview and PDF from one view-model, with attribution |
 | ✅ | Stored-figure reads, seed data, health check, env validation |
 | ✅ | Deployed to Vercel, verified end to end in production |

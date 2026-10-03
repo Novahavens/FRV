@@ -1,8 +1,9 @@
 import {
   FURNITURE_BY_BEDROOM,
-  MULTIPLIER_TIERS,
   formatCents,
   formatMiles,
+  markupLabel,
+  tierLabel,
 } from '@/lib/frv';
 import type { Calculation, Cents, LossProperty } from '@/lib/frv';
 import {
@@ -177,16 +178,13 @@ export function buildReportModel(
       },
     ],
 
-    // Derived from the engine's own constants, so the guideline tables an
-    // adjuster checks can never disagree with the arithmetic above them.
-    multiplierTable: MULTIPLIER_TIERS.map((tier, i) => {
-      const lower = i === 0 ? 1 : (MULTIPLIER_TIERS[i - 1]!.maxMonths as number) + 1;
-      const label = Number.isFinite(tier.maxMonths)
-        ? `${lower}–${tier.maxMonths} months`
-        : `${lower}+ months`;
-      const markup = Math.round((tier.multiplier - 1) * 100);
-      return { label, value: markup === 0 ? 'No markup' : `${markup}%` };
-    }),
+    // Printed from the schedule this calculation actually used — stored with
+    // the row — so the guideline table an adjuster checks can never disagree
+    // with the arithmetic above it, even after the defaults change.
+    multiplierTable: calculation.multiplierTiers.map((tier, i) => ({
+      label: tierLabel(calculation.multiplierTiers, i),
+      value: markupLabel(tier.multiplier),
+    })),
 
     furnitureTable: Object.entries(FURNITURE_BY_BEDROOM).map(([beds, cents]) => ({
       label: `${beds} ${beds === '1' ? 'bedroom' : 'bedrooms'}`,

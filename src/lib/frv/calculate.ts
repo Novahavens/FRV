@@ -1,6 +1,7 @@
+import { MULTIPLIER_TIERS } from './constants';
 import { distanceMiles } from './geo';
 import { applyMultiplier, averageCents } from './money';
-import { furnitureForBedrooms, multiplierForTerm } from './multiplier';
+import { assertValidTiers, furnitureForBedrooms, multiplierForTerm } from './multiplier';
 import type { Calculation, Comp, EvaluatedComp, LossProperty, ValidationEvent } from './types';
 import { validate } from './validate';
 
@@ -51,7 +52,8 @@ export function calculateFrv(loss: LossProperty, rawComps: readonly Comp[]): Cal
     throw new ValidationFailedError(result.events.filter((e) => e.tone === 'block'));
   }
 
-  const multiplier = multiplierForTerm(loss.termMonths);
+  const tiers = assertValidTiers(loss.multiplierTiers ?? MULTIPLIER_TIERS);
+  const multiplier = multiplierForTerm(loss.termMonths, tiers);
   const furnitureCents = furnitureForBedrooms(loss.bedrooms);
   const { managementFeeCents } = loss;
 
@@ -72,6 +74,7 @@ export function calculateFrv(loss: LossProperty, rawComps: readonly Comp[]): Cal
 
   return {
     multiplier,
+    multiplierTiers: tiers.map((t) => ({ ...t })),
     furnitureCents,
     managementFeeCents,
     comps,

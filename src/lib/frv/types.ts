@@ -11,6 +11,12 @@ export type Cents = number;
 
 export type LeaseTermMonths = number;
 
+/** One row of a short-term multiplier schedule. The last tier has maxMonths = Infinity. */
+export interface MultiplierTier {
+  maxMonths: number;
+  multiplier: number;
+}
+
 /** The four validation outcomes, in the design system's own language. */
 export type Tone = 'pass' | 'warn' | 'block' | 'info';
 
@@ -35,6 +41,12 @@ export interface LossProperty {
   termMonths: LeaseTermMonths;
   /** Default 240_00. Zero is permitted — standard non-ASAP sourcing carries no fee. */
   managementFeeCents: Cents;
+  /**
+   * The multiplier schedule for this claim. Omitted means the defaults in
+   * constants.ts. Whatever is used is stored with the calculation and printed
+   * on the report, so the workings an adjuster checks match the arithmetic.
+   */
+  multiplierTiers?: readonly MultiplierTier[];
 }
 
 export interface Comp {
@@ -75,6 +87,8 @@ export interface ValidationEvent {
 
 export interface Calculation {
   multiplier: number;
+  /** The schedule the multiplier came from. */
+  multiplierTiers: MultiplierTier[];
   furnitureCents: Cents;
   managementFeeCents: Cents;
   comps: EvaluatedComp[];

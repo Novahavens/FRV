@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { calculateFrv } from '@/lib/frv';
+import { LEGACY_MULTIPLIER_TIERS, MULTIPLIER_TIERS, calculateFrv } from '@/lib/frv';
 import type { Comp, LossProperty } from '@/lib/frv';
 import { buildReportModel } from '@/lib/report/model';
 import { NEUTRALITY_DECLARATION } from '@/lib/report/declarations';
@@ -10,6 +10,7 @@ const loss: LossProperty = {
   lat: 32.9668, lng: -96.9903,
   bedrooms: 4, bathrooms: 2, sqft: 2100,
   termMonths: 3, managementFeeCents: 240_00,
+  multiplierTiers: LEGACY_MULTIPLIER_TIERS,
 };
 
 const comp = (id: string, rentCents: number, sqft: number): Comp => ({
@@ -66,7 +67,7 @@ describe('report model', () => {
 });
 
 describe('printed reference tables', () => {
-  it('derives the multiplier table from the engine, so it cannot drift', () => {
+  it('prints the schedule the calculation actually used, so the table cannot drift from the figure', () => {
     expect(model.multiplierTable).toEqual([
       { label: '1–2 months', value: '40%' },
       { label: '3–5 months', value: '30%' },
@@ -76,8 +77,11 @@ describe('printed reference tables', () => {
     ]);
   });
 
-  it('prints 25% at the 6-9 tier, not the 24% in the blank Drive template', () => {
-    expect(model.multiplierTable[2]).toEqual({ label: '6–9 months', value: '25%' });
+  it('prints the current defaults, half-points included, when a claim uses them', () => {
+    const { multiplierTiers: _omit, ...plain } = loss;
+    const current = buildReportModel(plain, calculateFrv(plain, [comp('c1', 3_835_00, 2250), comp('c2', 3_600_00, 2100), comp('c3', 3_200_00, 1900)]));
+    expect(current.multiplierTable.map((r) => r.value)).toEqual(['50%', '37.5%', '31.25%', '12.5%', 'No markup']);
+    expect(current.multiplierTable).toHaveLength(MULTIPLIER_TIERS.length);
   });
 
   it('prints every furniture rate', () => {

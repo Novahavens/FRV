@@ -2,7 +2,7 @@
 
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
-import { calculateFrv, type Comp, type LossProperty } from '@/lib/frv';
+import { calculateFrv, tiersFromStored, tiersToStored, type Comp, type LossProperty } from '@/lib/frv';
 import { db } from '@/lib/db/client';
 import { isConfigured } from '@/lib/env';
 
@@ -39,6 +39,12 @@ const payloadSchema = z.object({
   managementFeeCents: z.number().int().min(0),
   preparedBy: z.string().min(2, 'Your name goes on the audit trail.'),
   justification: z.string().optional(),
+  /** The multiplier schedule, if the operator changed it from the defaults. */
+  multiplierTiers: z
+    .array(z.object({ maxMonths: z.number().int().positive().nullable(), multiplier: z.number().min(1).max(5) }))
+    .min(1)
+    .max(8)
+    .optional(),
   comps: z.array(compSchema).length(3, 'An FRV needs exactly three comps.'),
 });
 
@@ -53,9 +59,16 @@ export async function submitFrv(_prev: SubmitState, formData: FormData): Promise
     return { error: parsed.error.issues.map((i) => i.message).join(' ') };
   }
 
-  const { comps: compInput, preparedBy, justification, ...lossInput } = parsed.data;
+  const { comps: compInput, preparedBy, justification, multiplierTiers: tiersInput, ...lossInput } = parsed.data;
 
-  const loss: LossProperty = lossInput;
+  let loss: LossProperty = lossInput;
+  if (tiersInput) {
+    try {
+      loss = { ...lossInput, multiplierTiers: tiersFromStored(tiersInput) };
+    } catch (error) {
+      return { error: error instanceof Error ? error.message : 'The multiplier schedule is not valid.' };
+    }
+  }
   const comps: Comp[] = compInput.map((c, i) => ({ id: `c${i + 1}`, ...c }));
 
   // Throws ValidationFailedError if any rule blocks. The client cannot reach
@@ -121,6 +134,7 @@ export async function submitFrv(_prev: SubmitState, formData: FormData): Promise
     claim_id: claim.id,
     version: 1,
     multiplier: calculation.multiplier,
+    multiplier_tiers: tiersToStored(calculation.multiplierTiers),
     furniture_cents: calculation.furnitureCents,
     mgmt_fee_cents: calculation.managementFeeCents,
     per_comp_frv_cents: calculation.comps.map((c) => c.frvCents),
