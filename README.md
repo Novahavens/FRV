@@ -213,8 +213,8 @@ Paste a Zillow listing URL and the comp fills itself: rent, bedrooms, bathrooms,
 
 This runs through **Firecrawl's catalogued Zillow capability**, approved by Will and Lou in October 2026. Its scope is deliberately narrow:
 
-- **`properties/rental` only** — metadata for the one listing the account manager already chose.
-- **Never `rental_search`.** That is comp discovery, which the PRD excludes. Comp selection stays human because geography is where FRVs go wrong, and no tool reliably tells one side of a boundary road from the other.
+- **`properties/rental`** — metadata for the one listing the account manager chose.
+- **`properties/rental_search`** — *Find comparables*: a shortlist of active rentals near the loss that fit it (bedrooms ±1, bathrooms ±1, size ±15%, within two miles, widening to five only when the near set is thin). Closest first, never highest rent first. The account manager picks; picking runs the single-listing lookup so every rule still applies. Comp selection stays human because geography is where FRVs go wrong, and no tool reliably tells one side of a boundary road from the other.
 - **Every field stays editable**, and the audit trail records which ones the operator changed. The lookup saves typing; it is never the source of truth.
 - **Expired listings are refused.** A comp that is no longer for rent is not evidence.
 - **The data remains Zillow's.** Records carry an attribution string, and any report built from them prints it.
@@ -314,7 +314,7 @@ This repo is set up for [Claude Code](https://claude.ai/code):
 |:--|:--|
 | ✅ | Calculation core, validation, fixtures |
 | ✅ | Schema with trigger-enforced locking and `open_revision()` |
-| ✅ | One-page intake with live figure and Firecrawl listing lookup |
+| ✅ | One-page intake with live figure, Firecrawl listing lookup and *Find comparables* shortlist |
 | ✅ | Report — web preview and PDF from one view-model, with attribution |
 | ✅ | Stored-figure reads, seed data, health check, env validation |
 | ✅ | Deployed to Vercel, verified end to end in production |

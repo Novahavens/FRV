@@ -14,7 +14,8 @@ import {
 } from '@/lib/frv';
 import { Button, Field, RuleBanner } from '@/components/ui/primitives';
 import { FrvSummary } from '@/components/frv/FrvSummary';
-import { geocode, lookupListing, submitFrv, type SubmitState } from './actions';
+import type { CompCandidate, SearchResult } from '@/lib/listings/types';
+import { geocode, lookupListing, searchComps, submitFrv, type SubmitState } from './actions';
 import styles from './ClaimForm.module.css';
 
 /**
@@ -91,10 +92,10 @@ export function ClaimForm() {
    * Paste a Zillow URL and the comp fills itself.
    *
    * Firecrawl's catalogued Zillow capability returns rent, beds, baths, square
-   * footage and coordinates for the one listing the operator chose. It never
-   * searches or ranks — that would be comp discovery, which the PRD excludes.
-   * If the lookup is off or fails, the address is still read from the URL and
-   * the rest is keyed by hand.
+   * footage and coordinates for the one listing the operator chose. If the
+   * lookup is off or fails, the address is still read from the URL and the rest
+   * is keyed by hand. Picking a search candidate below lands here too, so a
+   * found comp goes through exactly the same checks as a pasted one.
    */
   const handleUrlPaste = (index: number, url: string) => {
     patchComp(index, { url, note: null });
@@ -146,6 +147,7 @@ export function ClaimForm() {
     });
   };
 
+
   const loss: LossProperty | null = useMemo(() => {
     const parsedFee = parseMoneyToCents(managementFee);
     if (!address || !lat || !lng || !sqft || parsedFee == null) return null;
@@ -161,6 +163,36 @@ export function ClaimForm() {
       ? null
       : draft;
   }, [claimIdentifier, address, lat, lng, bedrooms, bathrooms, sqft, termMonths, managementFee]);
+
+  /**
+   * Find comps near the loss.
+   *
+   * A shortlist, not a selection: active rentals within the radius bands that
+   * fit the loss on bedrooms (±1), bathrooms (±1) and square footage (±15%),
+   * closest first. The operator chooses which slot each one fills, and the
+   * choice runs the single-listing lookup so Rule 1 sees the full text.
+   * Approved October 2026; see docs/DECISIONS.md.
+   */
+  const [searching, startSearch] = useTransition();
+  const [search, setSearch] = useState<SearchResult | null>(null);
+
+  const canSearch = Boolean(loss) && !searching;
+
+  const findComps = () => {
+    if (!loss) return;
+    startSearch(async () => {
+      setSearch(await searchComps({
+        address: loss.address, lat: loss.lat, lng: loss.lng,
+        bedrooms: loss.bedrooms, bathrooms: loss.bathrooms, sqft: loss.sqft,
+      }));
+    });
+  };
+
+  const useCandidate = (candidate: CompCandidate, slot: number) => {
+    handleUrlPaste(slot, candidate.url);
+  };
+
+  const slotLabel = (i: number) => (comps[i]?.url ? `Replace ${i + 1}` : `Use as ${i + 1}`);
 
   const readyComps: Comp[] | null = useMemo(() => {
     const built = comps.map((c, i): Comp | null => {
@@ -237,6 +269,71 @@ export function ClaimForm() {
           <Field id="loss-fee" label="Monthly management fee" value={managementFee} prefix="$" mono
             onChange={(e) => setManagementFee(e.target.value)}
             helper="Default $240. Zero is permitted on standard sourcing." />
+        </section>
+
+        <section className={styles.card} aria-labelledby="find-comps-title">
+          <div className={styles.findRow}>
+            <div>
+              <h2 id="find-comps-title" className={styles.cardTitle}>Find comparables</h2>
+              <p className={styles.findNote}>
+                Active Zillow rentals near the loss address that fit it on bedrooms, bathrooms and
+                size. Closest first. You choose which three.
+              </p>
+            </div>
+            <Button type="button" variant="secondary" onClick={findComps} disabled={!canSearch} loading={searching}
+              id="find-comps">
+              {searching ? 'Searching' : search ? 'Search again' : 'Find comps'}
+            </Button>
+          </div>
+
+          {!loss && (
+            <p className={styles.findNote}>Enter the loss address, bedrooms, bathrooms and square footage to search.</p>
+          )}
+
+          {search && !search.ok && (
+            <RuleBanner tone="warn" message="No shortlist this time." detail={search.message} />
+          )}
+
+          {search?.ok && search.candidates.length === 0 && (
+            <RuleBanner tone="warn" message={`Nothing within five miles of ${search.searched} fits the loss property.`}
+              detail="Widen by hand: paste listing URLs into the comparables below. Comps past five miles are blocked either way." />
+          )}
+
+          {search?.ok && search.candidates.length > 0 && (
+            <>
+              {search.widened && (
+                <RuleBanner tone="warn" message="Fewer than six matches within two miles, so the list reaches to five."
+                  detail="Anything marked 2–5 mi will need a written justification before you can lock." />
+              )}
+              <ul className={styles.candidates} aria-label="Comparable candidates">
+                {search.candidates.map((c) => (
+                  <li key={c.zpid} className={styles.candidate}>
+                    <div>
+                      <p className={styles.candidateAddress}>
+                        <a href={c.url} target="_blank" rel="noreferrer">{c.address}</a>
+                        <span className={`${styles.candidateBand} ${c.band === 'needs-justification' ? styles.bandWarn : styles.bandPass}`}>
+                          {c.distanceMiles.toFixed(1)} mi{c.band === 'needs-justification' ? ' · needs justification' : ''}
+                        </span>
+                      </p>
+                      <p className={styles.candidateMeta}>
+                        {formatCents(c.rentCents)}/mo · {c.bedrooms} bd · {c.bathrooms} ba · {c.sqft.toLocaleString()} sq ft
+                        {c.homeType ? ` · ${c.homeType.toLowerCase().replace(/_/g, ' ')}` : ''}
+                      </p>
+                    </div>
+                    <div className={styles.candidateActions}>
+                      {comps.map((_, i) => (
+                        <Button key={i} type="button" size="sm" variant="ghost" onClick={() => useCandidate(c, i)}
+                          disabled={fetching !== null}>
+                          {slotLabel(i)}
+                        </Button>
+                      ))}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+              {search.attribution && <p className={styles.attribution}>{search.attribution}</p>}
+            </>
+          )}
         </section>
 
         {comps.map((comp, i) => (

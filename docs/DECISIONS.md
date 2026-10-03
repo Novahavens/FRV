@@ -38,6 +38,17 @@ Rule 5 is enforced by triggers on `claims`, `comps` and `calculations`, not by h
 
 `calculateFrv` re-runs validation and throws on any blocking rule. A number with a caveat attached does not stop someone sourcing against it; an exception does.
 
+## Comp search is a shortlist, never a selection (October 2026)
+
+The original decision below excluded `rental_search` outright. That was revisited and approved by Will and Lou in October 2026 on these terms:
+
+- **Suggest, human picks.** "Find comparables" shows active rentals near the loss that fit it — bedrooms ±1, bathrooms ±1, square footage ±15%, within two miles, widening to five only when fewer than six are found inside two. Apartment communities are excluded; nothing past five miles is ever shown.
+- **Closest first, never highest rent first.** Ordering by rent would steer selection. High-to-low sorting happens *after* the human has chosen, as it always did.
+- **Picking a candidate is pasting its URL.** It runs the same single-listing lookup, so Rule 1 reads the full listing text, every field remains editable, and the audit trail is identical to a hand-pasted comp.
+- **Nothing is written to a claim by the search.** It populates a list on screen and nothing else.
+
+What this is not: automatic comp selection. The PRD's reason for excluding discovery — geography is where FRVs go wrong — still holds, which is why the shortlist is filtered by the engine's own radius bands and the final choice is a person's.
+
 ## Listing data comes through Firecrawl — narrowly
 
 Zillow retired its public API in September 2021. Its partner programme, Bridge Interactive, requires MLS membership. Commercial "Zillow APIs" are scraper wrappers.
@@ -45,7 +56,7 @@ Zillow retired its public API in September 2021. Its partner programme, Bridge I
 Will and Lou approved Firecrawl's catalogued Zillow capability in October 2026, on these terms:
 
 - `properties/rental` only — metadata for a listing the account manager already chose
-- never `rental_search`, which is comp discovery and excluded by FR-2
+- `rental_search` was excluded at the time; see the entry above for the October 2026 revision that admits it as a shortlist
 - every field editable, overrides recorded
 - expired listings refused
 - Zillow's attribution printed on any report built from its data
