@@ -70,6 +70,10 @@ Every change here is a **methodology or carrier-facing change**, not a code chan
 
 A `'block'` event makes `calculateFrv()` throw `ValidationFailedError`; a `'warn'` lets it proceed and (for the 2–5 mile band) requires a written justification in the form.
 
+## Recipe: Comp search shortlist (Find comparables)
+
+`src/lib/listings/candidates.ts` → `DEFAULT_CRITERIA` (bedroomVariance 1, bathroomVariance 1, sqftTolerance = SQFT_TOLERANCE, preferredRadiusMiles = 2, minimumBeforeWidening 6). Ranking is closest-first by design — do not rank by rent (that steers selection; see DECISIONS.md). Apartment communities (`is_building`) and anything past five miles are never shown. Tests: `tests/candidates.test.ts`. The upstream `beds_min`/`baths_min` in `firecrawl.ts#search` derive from the same criteria.
+
 ## Recipe: Selection / averaging
 
 `src/lib/frv/calculate.ts`. Selection is `sortHighToLow` (descending rent, position persisted as `sort_position`); output is `averageCents` of the three. Median was explicitly rejected. Changing either is a `DECISIONS.md` entry and will move both fixtures. Keep all arithmetic in integer cents via `money.ts` (`applyMultiplier`, `averageCents` — half-away-from-zero rounding).

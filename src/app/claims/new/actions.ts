@@ -196,3 +196,29 @@ export async function lookupListing(url: string) {
   const { listingProvider } = await import('@/lib/listings');
   return listingProvider().lookup(url);
 }
+
+const searchSchema = z.object({
+  address: z.string().min(3),
+  lat: z.number(),
+  lng: z.number(),
+  bedrooms: z.number().int().min(1).max(10),
+  bathrooms: z.number().min(0.5).max(10),
+  sqft: z.number().int().positive(),
+});
+
+/**
+ * Shortlist active rentals near the loss that fit its size.
+ *
+ * Suggestions, never selections. The operator clicks one, and that click goes
+ * through `lookupListing` like any pasted URL — so Rule 1 still reads the full
+ * listing before a figure lands in a comp slot. Approved October 2026 as the
+ * one sanctioned use of `rental_search`.
+ */
+export async function searchComps(input: unknown) {
+  const parsed = searchSchema.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false as const, reason: 'no-region' as const, message: 'Fill in the loss address, bedrooms, bathrooms and square footage first.' };
+  }
+  const { listingProvider } = await import('@/lib/listings');
+  return listingProvider().search(parsed.data);
+}
