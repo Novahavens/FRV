@@ -32,8 +32,7 @@ export function ReportSheet({ model }: { model: ReportModel }) {
     <article className={styles.sheet} aria-label="Fair Rental Value report">
       <header className={styles.masthead}>
         <div className={styles.brand}>
-          <Logo size={26} />
-          <span className={styles.placeholderNote}>placeholder mark</span>
+          <Logo size={26} withWordmark={false} />
         </div>
         <dl className={styles.meta}>
           <div><dt>Claim</dt><dd className="mono">{model.claimIdentifier}</dd></div>
