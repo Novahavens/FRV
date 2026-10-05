@@ -54,9 +54,7 @@ export function ReportSheet({ model }: { model: ReportModel }) {
           {model.loss.photoUrl ? (
             <img src={model.loss.photoUrl} alt="" className={styles.photo} />
           ) : (
-            <div className={styles.photoFallback} aria-hidden="true">
-              <Logo size={36} withWordmark={false} />
-            </div>
+            <img src="/images/generic-house.svg" alt="" className={styles.photo} />
           )}
           <p className={styles.lossAddress}>{model.loss.address}</p>
           <p className={styles.lossMeta}>{model.loss.size}</p>

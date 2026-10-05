@@ -86,6 +86,10 @@ function LogoImage() {
   return <Image src="/brand/nova-havens-logo.png" style={{ width: 20, height: 20 }} />;
 }
 
+function HouseImage() {
+  return <Image src="/images/generic-house.svg" style={{ width: 74, height: 74 }} />;
+}
+
 function Rows({ rows }: { rows: Array<{ label: string; value: string }> }) {
   const last = rows.length - 1;
   return (
@@ -139,7 +143,7 @@ export function ReportDocument({ model }: { model: ReportModel }) {
             <Text style={s.caption}>{model.headline.caption}</Text>
           </View>
           <View style={s.lossCard}>
-            <View style={s.photoFallback}><LogoImage /></View>
+            <View style={s.photoFallback}><HouseImage /></View>
             <Text style={s.lossHeading}>Loss Address Details</Text>
             <Text style={s.lossAddress}>{model.loss.address}</Text>
             <Text style={s.lossMeta}>{model.loss.size}</Text>
