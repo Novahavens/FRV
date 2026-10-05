@@ -11,6 +11,7 @@ const nextConfig = {
     '/api/claims/[id]/report': [
       './node_modules/pdfkit/js/standard-fonts/**',
       './node_modules/pdfkit/js/data/**',
+      './public/brand/**',
     ],
   },
 };

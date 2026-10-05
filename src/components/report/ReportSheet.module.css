@@ -20,11 +20,6 @@
   border-bottom: 1px solid var(--ink-primary);
 }
 .brand { display: flex; align-items: center; gap: var(--space-3); color: var(--ink-primary); }
-.placeholderNote {
-  font-size: 11px; color: var(--ink-tertiary);
-  border: 1px dashed var(--border-default); border-radius: var(--radius-sm);
-  padding: 2px var(--space-2);
-}
 .meta { display: flex; gap: var(--space-5); margin: 0; }
 .meta div { display: flex; flex-direction: column; gap: 2px; }
 .meta dt { font-size: 11px; color: var(--ink-tertiary); }
@@ -137,5 +132,4 @@
 
 @media print {
   .sheet { border: none; padding: 0; max-width: none; }
-  .placeholderNote { display: none; }
 }

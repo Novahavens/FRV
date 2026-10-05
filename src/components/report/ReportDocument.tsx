@@ -1,4 +1,4 @@
-import { Document, Page, StyleSheet, Text, View, Link, Svg, Rect, Line } from '@react-pdf/renderer';
+import { Document, Page, StyleSheet, Text, View, Link, Image } from '@react-pdf/renderer';
 import type { ReportModel } from '@/lib/report/model';
 
 /**
@@ -82,16 +82,8 @@ const s = StyleSheet.create({
     backgroundColor: C.sunken, padding: 8, borderRadius: 3 },
 });
 
-/** Placeholder mark — see components/brand/Logo.tsx. Replace before carrier use. */
-function MarkPdf() {
-  return (
-    <Svg width={20} height={20} viewBox="0 0 96 96">
-      <Line x1={20} y1={28} x2={76} y2={28} strokeWidth={5} stroke={C.ink} />
-      <Rect x={20} y={40} width={14} height={32} rx={4} fill={C.ink} />
-      <Rect x={41} y={48} width={14} height={24} rx={4} fill={C.ink} opacity={0.7} />
-      <Rect x={62} y={56} width={14} height={16} rx={4} fill={C.ink} opacity={0.45} />
-    </Svg>
-  );
+function LogoImage() {
+  return <Image src="/brand/nova-havens-logo.png" style={{ width: 20, height: 20 }} />;
 }
 
 function Rows({ rows }: { rows: Array<{ label: string; value: string }> }) {
@@ -115,8 +107,8 @@ export function ReportDocument({ model }: { model: ReportModel }) {
       <Page size="A4" style={s.page}>
         <View style={s.masthead}>
           <View style={s.brand}>
-            <MarkPdf />
-            <Text style={s.brandName}>Nova Havens</Text>
+            <LogoImage />
+            <Text style={s.brandName}>Nova Havens Fair Rental Value</Text>
           </View>
           <View style={s.meta}>
             <View>
@@ -147,7 +139,7 @@ export function ReportDocument({ model }: { model: ReportModel }) {
             <Text style={s.caption}>{model.headline.caption}</Text>
           </View>
           <View style={s.lossCard}>
-            <View style={s.photoFallback}><MarkPdf /></View>
+            <View style={s.photoFallback}><LogoImage /></View>
             <Text style={s.lossHeading}>Loss Address Details</Text>
             <Text style={s.lossAddress}>{model.loss.address}</Text>
             <Text style={s.lossMeta}>{model.loss.size}</Text>
