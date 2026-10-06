@@ -10,6 +10,7 @@ import {
   multiplierForTerm,
   parseMoneyToCents,
   sortHighToLow,
+  tierLabel,
   tiersFromStored,
   tiersToStored,
   validate,
@@ -42,22 +43,24 @@ const comp = (over: Partial<Comp> & Pick<Comp, 'id' | 'rentCents' | 'sqft'>): Co
   ...over,
 });
 
-describe('multiplier tiers — defaults (October 2026, +25% on every markup)', () => {
+describe('multiplier tiers — defaults (October 2026: 90/80/70/60%, none from 12 months)', () => {
   it.each([
-    [1, 1.5], [2, 1.5],
-    [3, 1.375], [5, 1.375],
-    [6, 1.3125], [9, 1.3125],
-    [10, 1.125], [11, 1.125],
+    [1, 1.9],
+    [2, 1.8],
+    [3, 1.7],
+    [4, 1.6], [11, 1.6],
     [12, 1.0], [24, 1.0],
   ])('term of %i months → ×%f', (months, expected) => {
     expect(multiplierForTerm(months)).toBe(expected);
   });
 
-  it('is exactly 25% more aggressive than the legacy schedule at every tier', () => {
-    MULTIPLIER_TIERS.forEach((tier, i) => {
-      const legacyMarkup = LEGACY_MULTIPLIER_TIERS[i]!.multiplier - 1;
-      expect(tier.multiplier - 1).toBeCloseTo(legacyMarkup * 1.25, 10);
-    });
+  it('labels single-month tiers in the singular/plural, ranges and the open tier', () => {
+    expect(MULTIPLIER_TIERS.map((_, i) => tierLabel(MULTIPLIER_TIERS, i))).toEqual([
+      '1 month', '2 months', '3 months', '4–11 months', '12+ months',
+    ]);
+    expect(LEGACY_MULTIPLIER_TIERS.map((_, i) => tierLabel(LEGACY_MULTIPLIER_TIERS, i))).toEqual([
+      '1–2 months', '3–5 months', '6–9 months', '10–11 months', '12+ months',
+    ]);
   });
 
   it('still honours the legacy schedule when a claim carries it', () => {
@@ -110,7 +113,7 @@ describe('operator-entered schedules', () => {
       comp({ id: 'c2', rentCents: 3_600_00, sqft: 2100 }),
       comp({ id: 'c3', rentCents: 3_200_00, sqft: 1900 }),
     ]);
-    expect(result.multiplier).toBe(1.375);
+    expect(result.multiplier).toBe(1.7);
     expect(result.multiplierTiers).toEqual(MULTIPLIER_TIERS);
   });
 });

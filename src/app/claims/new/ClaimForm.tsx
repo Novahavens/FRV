@@ -1,6 +1,6 @@
 'use client';
 
-import { useActionState, useMemo, useState, useTransition } from 'react';
+import { useActionState, useMemo, useRef, useState, useTransition } from 'react';
 import {
   MULTIPLIER_TIERS,
   REQUIRED_COMP_COUNT,
@@ -18,6 +18,7 @@ import {
   type MultiplierTier,
 } from '@/lib/frv';
 import { Button, Field, RuleBanner } from '@/components/ui/primitives';
+import { AddressAutocomplete } from '@/components/forms/AddressAutocomplete';
 import { FrvSummary } from '@/components/frv/FrvSummary';
 import type { CompCandidate, SearchResult } from '@/lib/listings/types';
 import { geocode, lookupListing, searchComps, submitFrv, type SubmitState } from './actions';
@@ -155,11 +156,30 @@ export function ClaimForm() {
     });
   };
 
+  /**
+   * The address text the current coordinates belong to, when a Places selection
+   * set them. Blur must not re-geocode that same text and overwrite Google's
+   * point with the Census one. `selectionSeq` drops a Census answer that lands
+   * after a selection.
+   */
+  const coordsFor = useRef<string | null>(null);
+  const selectionSeq = useRef(0);
+
+  const selectLossAddress = ({ address: picked, lat: pLat, lng: pLng }: { address: string; lat: number; lng: number }) => {
+    selectionSeq.current += 1;
+    coordsFor.current = picked;
+    setAddress(picked);
+    setLat(String(pLat));
+    setLng(String(pLng));
+  };
+
   const lookUpLoss = () => {
     if (!address.trim()) return;
+    if (coordsFor.current === address) return;
+    const seq = selectionSeq.current;
     startGeocode(async () => {
       const point = await geocode(address);
-      if (point) {
+      if (point && seq === selectionSeq.current) {
         setLat(String(point.lat));
         setLng(String(point.lng));
       }
@@ -277,8 +297,10 @@ export function ClaimForm() {
               helper="Goes on the audit trail with this FRV." />
           </div>
 
-          <Field id="loss-address" label="Loss address" value={address} placeholder="205 Park Meadow Way, Coppell TX 75019"
-            onChange={(e) => setAddress(e.target.value)} onBlur={lookUpLoss}
+          <AddressAutocomplete id="loss-address" label="Loss address" value={address}
+            placeholder="205 Park Meadow Way, Coppell TX 75019"
+            apiKey={process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}
+            onChange={setAddress} onSelect={selectLossAddress} onBlur={lookUpLoss}
             helper={lat && lng ? `Located at ${Number(lat).toFixed(4)}, ${Number(lng).toFixed(4)}` : 'Coordinates are looked up when you leave this field.'} />
 
           <div className={styles.quad}>

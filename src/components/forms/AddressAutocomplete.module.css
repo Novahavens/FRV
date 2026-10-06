@@ -1,0 +1,22 @@
+.wrap { position: relative; }
+
+.panel {
+  position: absolute; left: 0; right: 0; z-index: 20;
+  background: var(--surface-raised);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-overlay);
+  overflow: hidden;
+}
+.list { list-style: none; margin: 0; padding: var(--space-1) 0; }
+.option {
+  padding: var(--space-2) var(--space-3);
+  font-size: 14px; line-height: 20px; color: var(--ink-primary);
+  cursor: pointer;
+}
+.active { background: var(--surface-sunken); }
+.attribution {
+  margin: 0; padding: var(--space-1) var(--space-3);
+  font-size: 12px; line-height: 16px; color: var(--ink-tertiary);
+  border-top: 1px solid var(--border-subtle);
+}

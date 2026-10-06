@@ -85,3 +85,28 @@ Carriers already read Alacrity reports. Matching their section structure — Los
 ## Known wording conflict
 
 The evaluation note, reproduced verbatim from the reference reports, says amenities "have been taken into consideration". The tool excludes amenity fields entirely. This is flagged in `src/lib/report/declarations.ts` and open with Will. Until it is answered, the text stays as the reference reports have it.
+
+## Default multipliers are 90 / 80 / 70 / 60 by month (October 2026)
+
+Approved by Lou, October 2026. Supersedes the "+25% on every markup" defaults recorded above; the *per-claim editability* from that entry is unchanged.
+
+| Approved term | Markup | Multiplier |
+|:--|--:|--:|
+| 1 month | 90% | 1.90 |
+| 2 months | 80% | 1.80 |
+| 3 months | 70% | 1.70 |
+| 4–11 months | 60% | 1.60 |
+| 12+ months | none | 1.00 |
+
+Two things changed, not one: the markups, and the **tier boundaries** (the old schedule banded 1–2, 3–5, 6–9, 10–11). Still five tiers, so the form and the report table keep their shape. The 12+ month tier is editable like the others — a claim may carry a markup there if a carrier agrees one.
+
+What did not change: `LEGACY_MULTIPLIER_TIERS` (the pre-October schedule) still reads calculations stored without a schedule, and the Coppell ($6,448.50) and Camarillo ($10,145) fixtures still run under it as arithmetic regressions. Locked reports keep the schedule they were built from, as always. Only new claims see the new defaults.
+
+## Comp search stays Zillow-only; Furnished Finder declined (October 2026)
+
+A second concurrent search source was proposed for *Find comparables*, with Furnished Finder named. Declined, for two reasons that each suffice:
+
+1. **Rule 1.** Furnished Finder's inventory is furnished mid-term housing. A furnished listing is blocked by the engine and cannot even be stored (`check (furnished = false)`), so a shortlist from it would be a shortlist of comps that can never be used. Showing it would only invite the override Rule 1 forbids.
+2. **No capability.** Firecrawl's catalogue has no Furnished Finder provider. The other catalogued rental searches (Redfin `properties/search`, Craigslist `housing/search`) return neither reliable coordinates nor square footage, both of which `rankCandidates` requires.
+
+If a second *unfurnished* source with coordinates and square footage becomes available, it belongs behind the same `ListingProvider` interface and the same `rankCandidates` filter, run concurrently with Zillow and merged closest-first. Nothing in the form would change.

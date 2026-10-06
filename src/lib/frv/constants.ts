@@ -11,15 +11,15 @@ import type { Cents, MultiplierTier } from './types';
  *
  * These are the DEFAULTS. Since October 2026 the schedule is editable per
  * claim on the intake form, and the schedule actually used is stored with the
- * calculation and printed on the report. Approved by Lou, October 2026: every
- * markup is 25% higher than the original schedule (40 → 50, 30 → 37.5,
- * 25 → 31.25, 10 → 12.5). Twelve months and beyond stays at no markup.
+ * calculation and printed on the report. Defaults approved by Lou, October
+ * 2026: 1 month 90%, 2 months 80%, 3 months 70%, 4–11 months 60%, twelve
+ * months and beyond no markup. Editable per claim.
  */
 export const MULTIPLIER_TIERS: readonly MultiplierTier[] = [
-  { maxMonths: 2, multiplier: 1.5 },
-  { maxMonths: 5, multiplier: 1.375 },
-  { maxMonths: 9, multiplier: 1.3125 },
-  { maxMonths: 11, multiplier: 1.125 },
+  { maxMonths: 1, multiplier: 1.9 },
+  { maxMonths: 2, multiplier: 1.8 },
+  { maxMonths: 3, multiplier: 1.7 },
+  { maxMonths: 11, multiplier: 1.6 },
   { maxMonths: Infinity, multiplier: 1.0 },
 ];
 

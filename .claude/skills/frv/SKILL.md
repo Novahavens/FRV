@@ -9,7 +9,7 @@ description: Work on the Nova Havens FRV (Fair Rental Value) calculator — the 
 FRV = (base comp rent × term multiplier) + furniture + management fee, applied to three unfurnished comps, sorted high→low, then averaged. Once submitted the figure is locked by Postgres triggers; changes go through `open_revision()`.
 
 ## Non-negotiables
-- `src/lib/frv/constants.ts` holds the methodology defaults (multipliers, furniture, 5-mile cap). Change only with explicit sign-off. Multiplier tiers are editable per claim (Oct 2026); the schedule used is stored with the calculation. Defaults are legacy × 1.25.
+- `src/lib/frv/constants.ts` holds the methodology defaults (multipliers, furniture, 5-mile cap). Change only with explicit sign-off. Multiplier tiers are editable per claim (Oct 2026); the schedule used is stored with the calculation. Defaults (Oct 2026): 90/80/70/60% for 1/2/3/4–11 months, none from 12.
 - Money is integer cents. Never use floats for rent.
 - Reference fixtures (Coppell $6,448.50, Camarillo $10,145) are computed under `LEGACY_MULTIPLIER_TIERS` — arithmetic regressions, not schedule gates.
 - Furnished comps are rejected with no override; >5 miles halts; bathrooms are intentionally not matched.
