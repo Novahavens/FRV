@@ -62,14 +62,16 @@ export function tiersFromStored(stored: readonly StoredTier[]): MultiplierTier[]
   ) as MultiplierTier[];
 }
 
-/** "1–2 months" … "12+ months", for forms and the report's guideline table. */
+/** "1 month", "4–11 months" … "12+ months", for forms and the report's guideline table. */
 export function tierLabel(tiers: readonly MultiplierTier[], index: number): string {
   const tier = tiers[index]!;
   const lower = index === 0 ? 1 : tiers[index - 1]!.maxMonths + 1;
-  return Number.isFinite(tier.maxMonths) ? `${lower}–${tier.maxMonths} months` : `${lower}+ months`;
+  if (!Number.isFinite(tier.maxMonths)) return `${lower}+ months`;
+  if (lower === tier.maxMonths) return `${lower} ${lower === 1 ? 'month' : 'months'}`;
+  return `${lower}–${tier.maxMonths} months`;
 }
 
-/** 1.375 → "37.5%", 1 → "No markup". Never rounds away a half-point. */
+/** 1.375 → "37.5%" (legacy-derived values), 1 → "No markup". Never rounds away a half-point. */
 export function markupLabel(multiplier: number): string {
   const pct = Math.round((multiplier - 1) * 10_000) / 100;
   return pct === 0 ? 'No markup' : `${pct}%`;

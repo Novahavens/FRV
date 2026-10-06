@@ -26,7 +26,7 @@ npx vitest run -t "Coppell"                      # tests matching a name
 npm run build                # next build — must succeed with NO env vars set
 ```
 
-Env (see `.env.example`): `NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` (a Supabase `sb_secret_…` key works here), `FIRECRAWL_API_KEY` (optional; empty = manual comp entry). Without Supabase configured the app renders the Coppell demo claim and `/api/health` returns 503 — that is by design, not a bug.
+Env (see `.env.example`): `NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` (a Supabase `sb_secret_…` key works here), `FIRECRAWL_API_KEY` (optional; empty = manual comp entry), `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` (optional; empty = plain loss-address input, Census geocoding on blur). Without Supabase configured the app renders the Coppell demo claim and `/api/health` returns 503 — that is by design, not a bug.
 
 Database: apply `supabase/migrations/*.sql` in order, then optionally `supabase/seed.sql`.
 
@@ -59,7 +59,9 @@ Read `docs/DECISIONS.md` before "fixing" any of these:
 
 ## Reference fixtures
 
-`tests/calculate.test.ts` and `tests/report.test.ts` compute the PRD reference reports **under `LEGACY_MULTIPLIER_TIERS`**: Coppell TX = $6,448.50, Camarillo CA = $10,145. They are arithmetic regressions, not methodology gates — if they move, the *engine* changed, not the schedule. Default-schedule behaviour is asserted separately (every markup = legacy × 1.25).
+`tests/calculate.test.ts` and `tests/report.test.ts` compute the PRD reference reports **under `LEGACY_MULTIPLIER_TIERS`**: Coppell TX = $6,448.50, Camarillo CA = $10,145. They are arithmetic regressions, not methodology gates — if they move, the *engine* changed, not the schedule. Default-schedule behaviour is asserted separately (Oct 2026 defaults: 1 mo ×1.90, 2 mo ×1.80, 3 mo ×1.70, 4–11 mo ×1.60, 12+ ×1.00).
+
+**Loss address autocomplete** (`src/components/forms/AddressAutocomplete.tsx`) uses Google Places only when `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` is set; otherwise it renders the plain `Field` and `actions.ts#geocode` (US Census) runs on blur. The build must pass with no key. **Comp search is Zillow-only by decision** (Furnished Finder declined — see `docs/DECISIONS.md`).
 
 ## Deployment notes
 

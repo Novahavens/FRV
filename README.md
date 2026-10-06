@@ -57,13 +57,13 @@ Applied to each of three unfurnished comparables, sorted high to low, then **ave
 
 | Approved term | Default multiplier |
 |:--|--:|
-| 1 – 2 months | × 1.50 |
-| 3 – 5 months | × 1.375 |
-| 6 – 9 months | × 1.3125 |
-| 10 – 11 months | × 1.125 |
-| 12 months | × 1.00 |
+| 1 month | × 1.90 |
+| 2 months | × 1.80 |
+| 3 months | × 1.70 |
+| 4 – 11 months | × 1.60 |
+| 12+ months | × 1.00 |
 
-<sub>Defaults. Editable per claim; the schedule used is stored and printed.</sub>
+<sub>Defaults. Every tier, including 12+ months, is editable per claim; the schedule used is stored and printed.</sub>
 
 </td><td valign="top">
 
@@ -87,7 +87,7 @@ Under the original schedule, as the PRD reports were.<br>Kept as arithmetic regr
 </td></tr>
 </table>
 
-Management fee defaults to **$240**, is editable per claim, and accepts zero. Multipliers are editable per claim too: the intake form shows the five tiers as percentages, pre-filled with the defaults above (approved by Lou, October 2026 — every markup 25% higher than the original schedule). Whatever is entered is recomputed on the server, stored with the calculation and printed on the report, so the workings an adjuster checks always match the figure.
+Management fee defaults to **$240**, is editable per claim, and accepts zero. Multipliers are editable per claim too: the intake form shows the five tiers as percentages, pre-filled with the defaults above (approved by Lou, October 2026: 90 / 80 / 70 / 60 / 0). Whatever is entered is recomputed on the server, stored with the calculation and printed on the report, so the workings an adjuster checks always match the figure.
 
 <br>
 
@@ -163,6 +163,7 @@ flowchart TB
     end
     F -- submit --> A
     FC[Firecrawl · Zillow] -. fills fields .-> F
+    GPL[Google Places · optional] -. address suggestions + coordinates .-> F
     GEO[US Census geocoder] -. coordinates .-> F
     DB -- lock triggers --> DB
 
@@ -223,6 +224,12 @@ This runs through **Firecrawl's catalogued Zillow capability**, approved by Will
 
 Zillow itself has offered no public API since September 2021, and its partner programme requires MLS membership. Lookup runs when `FIRECRAWL_API_KEY` is set; without it the form works identically with manual entry. A licensed provider can replace Firecrawl by implementing `ListingProvider` without touching the form, the engine or the report.
 
+**Zillow is the only search source, on purpose.** A second concurrent source was considered in October 2026 — Furnished Finder specifically. It was declined: Furnished Finder's inventory is furnished by definition, which Rule 1 rejects outright, and Firecrawl's catalogue has no provider for it. The other catalogued rental searches (Redfin, Craigslist) do not return the coordinates and square footage the shortlist filter needs. See [the decision log](docs/DECISIONS.md#comp-search-stays-zillow-only-furnished-finder-declined-october-2026).
+
+## Loss address
+
+The loss address field offers **Google Places autocomplete** when `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` is set: suggestions appear as the account manager types (US addresses only), and picking one fills the address and its coordinates in one step. Without the key the field is a plain input and coordinates are looked up through the US Census geocoder when the field loses focus — exactly as before. Either way the coordinates are captured once at intake and stored, because Rule 4 depends on them.
+
 <br>
 
 ## The report
@@ -251,6 +258,7 @@ Without Supabase configured, the app renders the Coppell reference claim and say
 | `NEXT_PUBLIC_SUPABASE_URL` | Project URL |
 | `SUPABASE_SERVICE_ROLE_KEY` | Server-only. A new-style `sb_secret_…` key works here |
 | `FIRECRAWL_API_KEY` | Optional. Empty means manual comp entry |
+| `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` | Optional. Places API (New) key, HTTP-referrer restricted. Empty means a plain address field with Census geocoding |
 
 To run against a real database:
 
@@ -318,13 +326,14 @@ This repo is set up for [Claude Code](https://claude.ai/code):
 | ✅ | Calculation core, validation, fixtures |
 | ✅ | Schema with trigger-enforced locking and `open_revision()` |
 | ✅ | One-page intake with live figure, editable multiplier schedule, Firecrawl listing lookup and *Find comparables* shortlist |
+| ✅ | Google Places autocomplete on the loss address (optional key; plain input without it) |
 | ✅ | Report — web preview and PDF from one view-model, with attribution |
 | ✅ | Stored-figure reads, seed data, health check, env validation |
 | ✅ | Deployed to Vercel, verified end to end in production |
 | ◻️ | Revision flow UI |
 | ◻️ | Claim list |
 | ◻️ | Authentication — deferred; *Prepared by* writes to every audit row until then |
-| ◻️ | Real logo — the mark in use is a labelled placeholder |
+| ✅ | Nova Havens logo on the web and PDF report |
 
 ## Not built, on purpose
 

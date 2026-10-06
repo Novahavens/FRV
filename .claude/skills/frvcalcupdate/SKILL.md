@@ -22,11 +22,11 @@ Every change here is a **methodology or carrier-facing change**, not a code chan
 
 ## Recipe: Multiplier tiers
 
-**Defaults:** `src/lib/frv/constants.ts` → `MULTIPLIER_TIERS` (Oct 2026: 1.5 / 1.375 / 1.3125 / 1.125 / 1.0 — every markup is legacy × 1.25). `LEGACY_MULTIPLIER_TIERS` is the original schedule; keep it, it reads old rows and anchors the reference fixtures.
+**Defaults:** `src/lib/frv/constants.ts` → `MULTIPLIER_TIERS` (Oct 2026, approved by Lou: 1.9 / 1.8 / 1.7 / 1.6 / 1.0 for 1 / 2 / 3 / 4–11 / 12+ months). `LEGACY_MULTIPLIER_TIERS` is the original schedule; keep it, it reads old rows and anchors the reference fixtures.
 
 **Per-claim override:** the intake form (`ClaimForm.tsx`, "Short-term multipliers" card) edits the five percentages; boundaries are fixed. The schedule travels in the payload as `multiplierTiers` (`tiersToStored`, open-ended tier `maxMonths: null`), is validated server-side by `tiersFromStored → assertValidTiers` (ascending, last open-ended, 1.00 ≤ m ≤ 5.00), used by `calculateFrv`, stored in `calculations.multiplier_tiers`, and printed via `model.ts → multiplierTable` (`tierLabel`/`markupLabel`).
 
-- Changing a **default**: edit `MULTIPLIER_TIERS` only. Tests: `'multiplier tiers — defaults'` in `calculate.test.ts` (per-term table + the "+25% on legacy" assertion — update or remove that assertion deliberately) and the defaults row in `report.test.ts`.
+- Changing a **default**: edit `MULTIPLIER_TIERS` only. Tests: `'multiplier tiers — defaults'` in `calculate.test.ts` (per-term table and the `tierLabel` test) and the defaults row in `report.test.ts`.
 - Changing **boundaries** (e.g. a 4–6 month tier): edit both `MULTIPLIER_TIERS` and `LEGACY_MULTIPLIER_TIERS`' *shape* only if the form must show the new rows (the form builds its rows from `MULTIPLIER_TIERS`); stored rows keep their own shape. `tierLabel` derives labels, so no copy to update.
 - Making boundaries editable too: extend the card to edit `maxMonths`, keep `assertValidTiers` as the gate.
 - Fixture impact: the Coppell/Camarillo tests pass `LEGACY_MULTIPLIER_TIERS` explicitly and should not move when defaults change. If they move, the arithmetic changed.
