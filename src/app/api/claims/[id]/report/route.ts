@@ -2,6 +2,7 @@ import { renderToBuffer, type DocumentProps } from '@react-pdf/renderer';
 import { createElement, type ReactElement } from 'react';
 import { buildReportModel } from '@/lib/report/model';
 import { ReportDocument } from '@/components/report/ReportDocument';
+import { reportImagery, reportImages } from '@/lib/maps/report-imagery';
 import { ClaimNotFoundError, NotLockedError, loadLockedClaim } from '@/lib/db/claims';
 
 /**
@@ -25,15 +26,17 @@ export async function GET(
 
   try {
     const claim = await loadLockedClaim(id);
+    const [imagery, images] = await Promise.all([reportImagery(claim), reportImages(claim)]);
     const model = buildReportModel(claim.loss, claim.calculation, {
       status: claim.status === 'locked' ? 'Final' : 'Draft',
       version: claim.version,
-      photoUrl: claim.photoUrl,
+      photoUrl: imagery.photoUrl,
+      mapUrl: imagery.mapUrl,
       attribution: claim.attribution,
     });
 
     const buffer = await renderToBuffer(
-      createElement(ReportDocument, { model }) as unknown as ReactElement<DocumentProps>,
+      createElement(ReportDocument, { model, images }) as unknown as ReactElement<DocumentProps>,
     );
     const filename = `FRV-${model.claimIdentifier.replace(/[^A-Za-z0-9-]/g, '-')}.pdf`;
 

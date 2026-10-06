@@ -27,6 +27,14 @@ const model = buildReportModel(
 );
 
 describe('report model', () => {
+  it('carries the aerial map only when a mapUrl is supplied', () => {
+    const calc = calculateFrv(loss, [comp('c1', 3_835_00, 2250), comp('c2', 3_600_00, 2100), comp('c3', 3_200_00, 1900)]);
+    const withMap = buildReportModel(loss, calc, { mapUrl: '/api/claims/x/map' });
+    expect(withMap.map?.url).toBe('/api/claims/x/map');
+    expect(withMap.map?.caption).toContain('comparables');
+    expect(buildReportModel(loss, calc).map).toBeNull();
+  });
+
   it('headlines the averaged FRV with both decimal places', () => {
     expect(model.headline.amount).toBe('$6,448.50');
   });

@@ -43,12 +43,22 @@ export function ReportSheet({ model }: { model: ReportModel }) {
 
       <p className={styles.preamble}>{model.notes.evaluation} {model.notes.availability}</p>
 
-      <section className={styles.hero}>
+      <section className={model.map ? `${styles.hero} ${styles.heroWithMap}` : styles.hero}>
         <div className={styles.heroText}>
           <h1 className={styles.title}>Fair Rental Value</h1>
           <p className={styles.figure}>{model.headline.amount}</p>
           <p className={styles.caption}>{model.headline.caption}</p>
         </div>
+        {model.map && (
+          <figure className={styles.mapCard}>
+            <img
+              src={model.map.url}
+              alt="Aerial map of the loss address and comparables"
+              className={styles.map}
+            />
+            <figcaption className={styles.mapCaption}>{model.map.caption}</figcaption>
+          </figure>
+        )}
         <div className={styles.lossCard}>
           <h2 className={styles.lossHeading}>Loss Address Details</h2>
           {model.loss.photoUrl ? (
