@@ -196,10 +196,28 @@ Why the picker goes past Rule 4: the operator knows the market. A loss in a smal
 
 **What did not change**
 
-- **Rule 4.** The bands and the block are untouched. The engine still halts at calculation for a comp past 5 miles, so such a comp can be picked and filled but cannot lock. The form says why.
+- **Rule 4.** Untouched by this entry — but see the next entry, made the same day, which opens the 5–100 mile band.
 - Eligibility gates (bedrooms ±1, bathrooms ±1, size ±15%, no buildings, active only), likeness ordering, never rent.
 - Picking runs the same `lookup`; the search writes nothing to a claim.
 
 **What this is not**
 
-Not a lift of the 5-mile rule. Whether comps beyond five miles should ever be allowed to lock is a methodology decision for Lou, and it has not been made. If it is, it is a change to `RADIUS_BANDS` in `constants.ts` and a new entry here, not a change to the picker.
+Not, by itself, a lift of the 5-mile rule. That decision was taken separately the same day — next entry.
+
+## Rule 4: comps permitted to 100 miles, noted rather than justified (October 2026)
+
+Fazal, 7 October 2026, answering the question raised in the entry above. Revises the "past five miles halts" term of Rule 4.
+
+**Decision**
+
+- `RADIUS_BANDS` gains `limit: 100`. The bands are now: under 1 mile clean, 1–2 acceptable, 2–5 needs a written justification (unchanged), **5–100 extended**, past 100 the calculation halts.
+- The extended band is permitted freely: an `info` event ("This comp is 23.4 miles from the loss address") appears on the form and the distance is printed on the report, but no justification is required and nothing blocks. The form's red hue on candidates past 5 miles stays as the visual cue.
+- `classifyDistance` returns the new `'extended'` band; `checkGeography` emits `tone: 'info'` for it. `'beyond-limit'` now means past 100 miles.
+
+**Why**
+
+The operator knows the market. Small-town and rural losses often have no comparable inside five miles, and the previous rule left the account manager with a shortlist they could see but not use. The picker already reached 100 miles; the methodology now matches it. The 2–5 mile justification stays because it is what adjusters expect to read.
+
+**What this is not**
+
+Not a change to selection or arithmetic: the mean of three, high-to-low ordering and the fixtures are untouched. Not a change to locked reports: `loadLockedClaim` reads stored figures. Lou was asked in Slack before this was made and is informed of the outcome in the same thread.

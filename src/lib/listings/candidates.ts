@@ -42,7 +42,7 @@ export interface CompCandidate {
   /** ISO date the unit is available from, when Zillow reports one. */
   availableFrom: string | null;
   distanceMiles: number;
-  /** 'beyond-limit' candidates are shown for context only; Rule 4 blocks them at calculation. */
+  /** 'extended' (5–100 mi) is shown with a red hue as a cue; 'beyond-limit' (>100 mi) is blocked by Rule 4. */
   band: RadiusBand;
   /**
    * How closely this listing matches the loss on beds, baths, size and home
@@ -61,7 +61,7 @@ export interface CandidateCriteria {
   bathroomVariance: number;
   /** Square footage tolerance as a fraction. Default SQFT_TOLERANCE (15%). */
   sqftTolerance: number;
-  /** Offer nothing farther than this. Operator-chosen; default 2.5 mi. Past 5 mi is shown but Rule 4 blocks it. */
+  /** Offer nothing farther than this. Operator-chosen; default 2.5 mi, up to Rule 4's 100-mi limit. */
   radiusMiles: number;
 }
 
@@ -120,7 +120,7 @@ export function scoreLikeness(
  * Gates mirror the rules an operator would apply by hand: drop what cannot be
  * a comp (apartment communities, delisted, incomplete), keep what is
  * like-for-like (bedrooms, bathrooms, size), and keep what is inside the radius
- * the operator chose (past Rule 4's five miles they are kept, flagged beyond-limit).
+ * the operator chose (past five miles they are kept, flagged extended).
  *
  * Within that eligible set: likeness first, distance as the tiebreaker. Rent is
  * deliberately not a ranking input: putting the highest rent at the top would
@@ -163,8 +163,8 @@ export function rankCandidates(
 
     const miles = distanceMiles(loss, { lat, lng });
     if (miles > radius) continue;
-    // Beyond-limit records are kept: the operator chose this radius, the UI marks
-    // them, and Rule 4 still blocks them at calculation.
+    // Extended-band records are kept: the operator chose this radius and the UI
+    // marks them in red as a cue.
     const { band } = classifyDistance(miles);
 
     const homeType = r.home_type ?? null;

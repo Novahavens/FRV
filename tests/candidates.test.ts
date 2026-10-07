@@ -44,13 +44,13 @@ describe('rankCandidates — what qualifies', () => {
     expect(rankCandidates(loss, [fit({ url: 'https://www.zillow.com/apartments/x/' })])).toHaveLength(0);
   });
 
-  it('offers past-five-mile records only when the operator widened the radius, flagged beyond-limit', () => {
+  it('offers past-five-mile records only when the operator widened the radius, flagged extended', () => {
     const r = fit({ lat: milesNorth(5.5) });
     expect(rankCandidates(loss, [r])).toHaveLength(0);
     expect(rankCandidates(loss, [r], { radiusMiles: 5 })).toHaveLength(0);
     const wide = rankCandidates(loss, [r], { radiusMiles: 10 });
     expect(wide).toHaveLength(1);
-    expect(wide[0]?.band).toBe('beyond-limit');
+    expect(wide[0]?.band).toBe('extended');
   });
 
   it('dedupes by zpid', () => {
