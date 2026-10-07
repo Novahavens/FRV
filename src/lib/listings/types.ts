@@ -42,11 +42,55 @@ export type LookupResult =
 export interface SearchQuery extends LossShape {
   /** Free-text loss address; the provider derives a search region from it. */
   address: string;
+  /**
+   * How far from the loss to look, in miles. One of SEARCH_RADIUS_STEPS; the
+   * operator chooses it and widens deliberately. Never more than the Rule 4
+   * limit.
+   */
+  radiusMiles: number;
 }
 
 export type SearchResult =
-  | { ok: true; candidates: CompCandidate[]; searched: string; widened: boolean; attribution: string | null }
+  | {
+      ok: true;
+      /** Ranked by likeness to the loss, distance as the tiebreaker. Already inside `radiusMiles`. */
+      candidates: CompCandidate[];
+      /** The region text the provider searched (a ZIP or "City, ST"). */
+      searched: string;
+      /** The radius the operator asked for and the results were filtered to. */
+      radiusMiles: number;
+      /** How many provider pages were pulled; wider radii cost more. */
+      pagesFetched: number;
+      attribution: string | null;
+    }
   | { ok: false; reason: 'not-configured' | 'no-region' | 'upstream-error'; message: string };
+
+/**
+ * Operator-side narrowing of a shortlist. Everything here is a fact Zillow's
+ * search already returns, so filtering is instant and costs nothing. Amenities
+ * (garage, pool, laundry…) are deliberately absent: the search records do not
+ * carry them, and fetching details per listing was declined for cost.
+ */
+export interface CandidateFilter {
+  /** Zillow home types to keep, e.g. ['SINGLE_FAMILY', 'TOWNHOUSE']. Empty = all. */
+  homeTypes: string[];
+  /** Pet kinds the listing must allow, e.g. ['dogs']. Empty = no requirement. */
+  pets: string[];
+  /** Keep listings available on or before this ISO date (YYYY-MM-DD). null = any. */
+  availableBy: string | null;
+  /** Only the loss property's exact bedroom count. */
+  exactBeds: boolean;
+  /** Only the loss property's exact bathroom count. */
+  exactBaths: boolean;
+}
+
+export const EMPTY_FILTER: CandidateFilter = {
+  homeTypes: [],
+  pets: [],
+  availableBy: null,
+  exactBeds: false,
+  exactBaths: false,
+};
 
 export interface ListingProvider {
   readonly name: ListingSource;

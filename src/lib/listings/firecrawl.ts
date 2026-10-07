@@ -1,6 +1,5 @@
 import 'server-only';
-import { RADIUS_BANDS } from '@/lib/frv';
-import { DEFAULT_CRITERIA, rankCandidates, searchLocationFor, type ZillowSearchRecord } from './candidates';
+import { DEFAULT_CRITERIA, rankCandidates, searchRegionsFor, type ZillowSearchRecord } from './candidates';
 import type { ListingProvider, LookupResult, SearchQuery, SearchResult } from './types';
 import { mapZillowRecord, type ZillowRentalRecord } from './zillow-record';
 
@@ -21,8 +20,9 @@ import { mapZillowRecord, type ZillowRentalRecord } from './zillow-record';
 const ENDPOINT = 'https://api.firecrawl.dev/v2/scrape';
 const ZILLOW_DETAIL = /^https:\/\/www\.zillow\.com\/homedetails\/[^/]+\/\d+_zpid\/?/i;
 
-/** Pages of 41 to pull before filtering. Two covers a ZIP comfortably; each page is one credit charge. */
-const SEARCH_PAGES = 2;
+/** Pages of 41 to pull per region before filtering (5 credits each). Wider radii pull more, capped overall. */
+const pagesPerRegion = (radiusMiles: number) => (radiusMiles <= 2.5 ? 2 : 3);
+const MAX_TOTAL_PAGES = 6;
 
 type AlexandriaResponse<T> = {
   data?: {
@@ -95,51 +95,71 @@ export function createFirecrawlProvider(apiKey: string): ListingProvider {
     },
 
     async search(query: SearchQuery): Promise<SearchResult> {
-      const location = searchLocationFor(query.address);
-      if (!location) {
+      const regions = searchRegionsFor(query.address, query.radiusMiles);
+      if (regions.length === 0) {
         return { ok: false, reason: 'no-region', message: 'Could not read a ZIP or city from the loss address. Add one and try again.' };
       }
 
-      // The upstream filters are coarse on purpose: the shortlist criteria
-      // (±1 bed, ±1 bath, ±15% sqft, radius bands) are applied here, in code
-      // that is tested, rather than trusting a search index's interpretation.
-      const options: Record<string, unknown> = {
-        location,
-        beds_min: Math.max(0, query.bedrooms - DEFAULT_CRITERIA.bedroomVariance),
-        baths_min: Math.max(0, query.bathrooms - DEFAULT_CRITERIA.bathroomVariance),
-        sort: 'relevance',
-      };
-
+      const perRegion = pagesPerRegion(query.radiusMiles);
       const records: ZillowSearchRecord[] = [];
-      let cursor: string | null | undefined;
-      for (let page = 0; page < SEARCH_PAGES; page++) {
-        const res = await alexandria<ZillowSearchRecord>(
-          apiKey,
-          'properties/rental_search',
-          cursor ? { ...options, cursor } : options,
-          20_000,
-        );
-        if (!res.ok) {
-          if (records.length) break; // keep what we have
-          return {
-            ok: false,
-            reason: 'upstream-error',
-            message: res.status
-              ? `The listing service returned ${res.status}. Paste listing URLs by hand.`
-              : 'The listing service did not respond. Paste listing URLs by hand.',
-          };
+      let pagesFetched = 0;
+      let failure: { status?: number } | null = null;
+
+      // The upstream filters are coarse on purpose: the shortlist criteria
+      // (±1 bed, ±1 bath, ±15% sqft, radius) are applied in rankCandidates, in
+      // code that is tested, rather than trusting a search index's reading.
+      regionLoop: for (const location of regions) {
+        const options: Record<string, unknown> = {
+          location,
+          beds_min: Math.max(0, query.bedrooms - DEFAULT_CRITERIA.bedroomVariance),
+          baths_min: Math.max(0, query.bathrooms - DEFAULT_CRITERIA.bathroomVariance),
+          sort: 'relevance',
+        };
+        let cursor: string | null | undefined;
+        for (let page = 0; page < perRegion; page++) {
+          if (pagesFetched >= MAX_TOTAL_PAGES) break regionLoop;
+          const res = await alexandria<ZillowSearchRecord>(
+            apiKey,
+            'properties/rental_search',
+            cursor ? { ...options, cursor } : options,
+            20_000,
+          );
+          if (!res.ok) {
+            failure = { status: res.status };
+            break regionLoop;
+          }
+          pagesFetched++;
+          const pageRecords = res.result?.data?.records ?? [];
+          records.push(...pageRecords);
+          cursor = res.result?.data?.next_cursor;
+          if (!cursor || pageRecords.length === 0) break;
         }
-        const pageRecords = res.result?.data?.records ?? [];
-        records.push(...pageRecords);
-        cursor = res.result?.data?.next_cursor;
-        if (!cursor || pageRecords.length === 0) break;
       }
 
-      const candidates = rankCandidates(query, records);
-      const widened = candidates.some((c) => c.distanceMiles > RADIUS_BANDS.acceptable);
-      const attribution = candidates.find((c) => c.attribution)?.attribution ?? records.find((r) => r.attribution)?.attribution ?? null;
+      // Keep what we have if anything came back before the failure.
+      if (failure && records.length === 0) {
+        return {
+          ok: false,
+          reason: 'upstream-error',
+          message: failure.status
+            ? `The listing service returned ${failure.status}. Paste listing URLs by hand.`
+            : 'The listing service did not respond. Paste listing URLs by hand.',
+        };
+      }
 
-      return { ok: true, candidates, searched: location, widened, attribution };
+      const seen = new Set<string>();
+      const unique = records.filter((r) => {
+        const key = r.zpid != null ? String(r.zpid) : r.url ?? '';
+        if (!key) return true;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+
+      const candidates = rankCandidates(query, unique, { radiusMiles: query.radiusMiles });
+      const attribution = candidates.find((c) => c.attribution)?.attribution ?? unique.find((r) => r.attribution)?.attribution ?? null;
+
+      return { ok: true, candidates, searched: regions.join(' + '), radiusMiles: query.radiusMiles, pagesFetched, attribution };
     },
   };
 }

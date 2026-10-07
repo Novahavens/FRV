@@ -65,6 +65,16 @@ export const RADIUS_BANDS = {
 } as const;
 
 /**
+ * Radii the operator can choose for "Find comparables", in miles. The first
+ * is the default; the last equals the Rule 4 limit, because a comp past it is
+ * blocked by the engine and would be a shortlist of nothing. Widening is a
+ * deliberate click, never automatic (October 2026).
+ */
+export const SEARCH_RADIUS_STEPS = [2.5, 3, 4, 5] as const;
+export type SearchRadiusMiles = (typeof SEARCH_RADIUS_STEPS)[number];
+export const DEFAULT_SEARCH_RADIUS_MILES: SearchRadiusMiles = 2.5;
+
+/**
  * Title and description keywords that mark a listing as short-term furnished
  * stock. Rule 1 is a hard block, so this list is deliberately broad: a false
  * positive costs the operator one replacement, a false negative costs the

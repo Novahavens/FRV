@@ -2,7 +2,7 @@
 
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
-import { calculateFrv, tiersFromStored, tiersToStored, type Comp, type LossProperty } from '@/lib/frv';
+import { SEARCH_RADIUS_STEPS, calculateFrv, tiersFromStored, tiersToStored, type Comp, type LossProperty } from '@/lib/frv';
 import { db } from '@/lib/db/client';
 import { isConfigured } from '@/lib/env';
 
@@ -218,6 +218,9 @@ const searchSchema = z.object({
   bedrooms: z.number().int().min(1).max(10),
   bathrooms: z.number().min(0.5).max(10),
   sqft: z.number().int().positive(),
+  radiusMiles: z
+    .number()
+    .refine((r) => (SEARCH_RADIUS_STEPS as readonly number[]).includes(r), 'Choose a radius from the picker.'),
 });
 
 /**

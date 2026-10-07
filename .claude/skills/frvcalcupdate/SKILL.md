@@ -66,7 +66,7 @@ A `'block'` event makes `calculateFrv()` throw `ValidationFailedError`; a `'warn
 
 ## Recipe: Comp search shortlist (Find comparables)
 
-`src/lib/listings/candidates.ts` → `DEFAULT_CRITERIA` (bedroomVariance 1, bathroomVariance 1, sqftTolerance = SQFT_TOLERANCE, preferredRadiusMiles = 2, minimumBeforeWidening 6). Ranking is closest-first by design — do not rank by rent (that steers selection; see DECISIONS.md). Apartment communities (`is_building`) and anything past five miles are never shown. Tests: `tests/candidates.test.ts`. The upstream `beds_min`/`baths_min` in `firecrawl.ts#search` derive from the same criteria.
+`src/lib/listings/candidates.ts` → `DEFAULT_CRITERIA` (bedroomVariance 1, bathroomVariance 1, sqftTolerance = SQFT_TOLERANCE, radiusMiles — chosen by the operator from `SEARCH_RADIUS_STEPS` in `src/lib/frv/constants.ts`, default 2.5; there is no automatic widening). Those are eligibility gates. Order is by likeness, then distance: `scoreLikeness` weights beds exact 0.35, baths exact 0.25 (half-bath off 0.15), size closeness 0.30, single-family 0.10 — change the weights there. Never rank by rent (that steers selection; see DECISIONS.md). Apartment communities (`is_building`) and anything past five miles are never shown. Result filters (home type, pets, available-by, exact beds/baths) are the pure `src/lib/listings/filters.ts`; tests in `tests/candidates.test.ts` and `tests/filters.test.ts`. The upstream `beds_min`/`baths_min` in `firecrawl.ts#search` derive from the same criteria.
 
 ## Recipe: Selection / averaging
 

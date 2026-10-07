@@ -1,0 +1,15 @@
+.wrap { display: flex; flex-direction: column; gap: var(--space-2); }
+.label { font-size: 13px; line-height: 16px; font-weight: 500; color: var(--ink-secondary); }
+.group { display: flex; flex-wrap: wrap; gap: var(--space-1); }
+.option {
+  min-height: 32px; padding: 0 var(--space-3); border-radius: var(--radius-md);
+  border: 1px solid var(--border-default); background: var(--surface-raised); color: var(--ink-primary);
+  font-family: var(--font-mono); font-size: 13px; cursor: pointer;
+}
+.option:hover:not(:disabled) { border-color: var(--border-strong); }
+.option:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+.option:disabled { opacity: 0.5; cursor: not-allowed; }
+.selected, .selected:hover:not(:disabled) {
+  background: var(--accent-subtle); color: var(--accent-ink); border-color: var(--accent-base); font-weight: 600;
+}
+.helper { font-size: 12px; line-height: 17px; color: var(--ink-tertiary); }
