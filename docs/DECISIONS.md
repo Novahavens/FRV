@@ -159,3 +159,47 @@ The recorded rule becomes: **most like the loss first, closest as tiebreaker, ne
 - Not amenity matching. Garage, pool, laundry, A/C and yard are not in search records. Fetching the detail listing for every candidate costs 5 credits each; considered and declined.
 - Not automatic selection. The score orders a list; a person still chooses.
 - Not a ranking by rent, and not a change to the FRV arithmetic.
+
+## Prepared by is a list, not a text field (October 2026)
+
+Fazal, 7 October 2026. *Prepared by* was free text. It is now a dropdown of account managers.
+
+**Why**
+
+*Prepared by* writes to every audit row until authentication lands. A free-text name drifts: "Fazal", "Fazal A.", "fazal abed" are three people to a query and to an adjuster reading the trail. An audit row needs one canonical name per person.
+
+**How**
+
+- The list lives in a table, `account_managers (name, active, sort_order)` (migration `0005_account_managers.sql`), so a name can be added or retired without a deploy. Retiring sets `active = false`; the row stays, so the name on past audit rows still resolves.
+- `listAccountManagers()` in `src/lib/db/account-managers.ts` loads the active names. The server action rejects any name not on the list, so the dropdown is not the only guard.
+- Without Supabase the form falls back to `DEFAULT_ACCOUNT_MANAGERS` in `src/lib/account-managers.ts`, the same way the app falls back to the demo claim. Seeded with Fazal Abed, William and Louise Jaffe.
+
+**What this is not**
+
+Not authentication. Anyone can still pick any name; the list makes the name canonical, not proven. Login remains deferred.
+
+## Find comps: unfurnished only, radius to 100 miles, Rule 4 unchanged (October 2026)
+
+Fazal, 7 October 2026. Two changes to *Find comps*, recorded together. Revises the radius terms of "Find comps: likeness first, radius is the operator's choice" and the "nothing past five miles is ever shown" line in "Comp search is a shortlist, never a selection".
+
+**Unfurnished homes only**
+
+Zillow's `rental_search` can restrict *to* furnished listings but not away from them. So each search also pulls one `furnished=true` page per region and subtracts those listings before ranking. Cost: one extra Firecrawl call per region.
+
+Why subtract rather than show and let Rule 1 catch it: a shortlist full of furnished homes is a shortlist of comps that can never be stored. Showing them invites the override Rule 1 forbids and wastes the operator's picks. The subtraction is best-effort, since it removes only what one page of furnished results contains. **Rule 1's full-text check on pick remains the final gate**, and `check (furnished = false)` still backs it.
+
+**Radius picker to 100 miles**
+
+`SEARCH_RADIUS_STEPS` is now 2.5 / 3 / 4 / 5 / 10 / 25 / 50 / 100. Past 5 miles the region strategy adds the state (ZIP + city + state; 4 pages per region, 10 in total). Zillow has no radius search, so coverage thins as the radius grows; 100 miles is the widest search, not a complete one. The nudge ladder for thin results walks 5 → 10 → 25 → 50 → 100, and at 100 the copy says so.
+
+Why the picker goes past Rule 4: the operator knows the market. A loss in a small town may have no defensible comp inside five miles, and the operator should see what exists rather than be told nothing does. Candidates past 5 miles are shown with a light red hue and an "Outside 5 mi · Rule 4" chip. The Use button stays enabled, because the cue is for the operator, not a second gate.
+
+**What did not change**
+
+- **Rule 4.** The bands and the block are untouched. The engine still halts at calculation for a comp past 5 miles, so such a comp can be picked and filled but cannot lock. The form says why.
+- Eligibility gates (bedrooms ±1, bathrooms ±1, size ±15%, no buildings, active only), likeness ordering, never rent.
+- Picking runs the same `lookup`; the search writes nothing to a claim.
+
+**What this is not**
+
+Not a lift of the 5-mile rule. Whether comps beyond five miles should ever be allowed to lock is a methodology decision for Lou, and it has not been made. If it is, it is a change to `RADIUS_BANDS` in `constants.ts` and a new entry here, not a change to the picker.

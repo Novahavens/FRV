@@ -20,9 +20,15 @@ import { mapZillowRecord, type ZillowRentalRecord } from './zillow-record';
 const ENDPOINT = 'https://api.firecrawl.dev/v2/scrape';
 const ZILLOW_DETAIL = /^https:\/\/www\.zillow\.com\/homedetails\/[^/]+\/\d+_zpid\/?/i;
 
-/** Pages of 41 to pull per region before filtering (5 credits each). Wider radii pull more, capped overall. */
-const pagesPerRegion = (radiusMiles: number) => (radiusMiles <= 2.5 ? 2 : 3);
-const MAX_TOTAL_PAGES = 6;
+/**
+ * Pages of 41 to pull per region before filtering (5 credits each). Wider radii
+ * pull more, capped overall. Zillow has no radius search, only regions (ZIP,
+ * city, state), so past the city coverage thins: a 100-mile search samples the
+ * first pages of a state-wide, relevance-sorted list, not everything in range.
+ * The furnished-exclusion pages below count against the same cap.
+ */
+const pagesPerRegion = (radiusMiles: number) => (radiusMiles <= 2.5 ? 2 : radiusMiles <= 5 ? 3 : 4);
+const MAX_TOTAL_PAGES = 10;
 
 type AlexandriaResponse<T> = {
   data?: {
@@ -102,6 +108,12 @@ export function createFirecrawlProvider(apiKey: string): ListingProvider {
 
       const perRegion = pagesPerRegion(query.radiusMiles);
       const records: ZillowSearchRecord[] = [];
+      // Zillow's `furnished` option can only restrict TO furnished (true); false
+      // or null does not filter. Unfurnished-only is therefore a subtraction:
+      // fetch one furnished page per region and drop those zpids from the results.
+      // Best effort: if that call fails we carry on, and Rule 1's full-text check
+      // on pick remains the gate.
+      const furnishedZpids = new Set<string>();
       let pagesFetched = 0;
       let failure: { status?: number } | null = null;
 
@@ -115,6 +127,20 @@ export function createFirecrawlProvider(apiKey: string): ListingProvider {
           baths_min: Math.max(0, query.bathrooms - DEFAULT_CRITERIA.bathroomVariance),
           sort: 'relevance',
         };
+        if (pagesFetched < MAX_TOTAL_PAGES) {
+          const furnished = await alexandria<ZillowSearchRecord>(
+            apiKey,
+            'properties/rental_search',
+            { ...options, furnished: true },
+            20_000,
+          );
+          if (furnished.ok) {
+            pagesFetched++;
+            for (const r of furnished.result?.data?.records ?? []) {
+              if (r.zpid != null) furnishedZpids.add(String(r.zpid));
+            }
+          }
+        }
         let cursor: string | null | undefined;
         for (let page = 0; page < perRegion; page++) {
           if (pagesFetched >= MAX_TOTAL_PAGES) break regionLoop;
@@ -149,6 +175,7 @@ export function createFirecrawlProvider(apiKey: string): ListingProvider {
 
       const seen = new Set<string>();
       const unique = records.filter((r) => {
+        if (r.zpid != null && furnishedZpids.has(String(r.zpid))) return false;
         const key = r.zpid != null ? String(r.zpid) : r.url ?? '';
         if (!key) return true;
         if (seen.has(key)) return false;

@@ -15,20 +15,27 @@ export function CandidateList({
   disabled?: boolean;
   attribution: string | null;
 }) {
+  const anyBeyond = candidates.some((c) => c.band === 'beyond-limit');
   return (
     <>
       <ul className={styles.candidates} aria-label="Comparable candidates">
         {candidates.map((c) => (
-          <li key={c.zpid} className={styles.candidate}>
+          <li key={c.zpid} className={`${styles.candidate} ${c.band === 'beyond-limit' ? styles.beyond : ''}`}>
             <div className={styles.main}>
               <p className={styles.address}>
                 <a href={c.url} target="_blank" rel="noreferrer">{c.address}</a>
                 <span className={`${styles.chip} ${c.match === 'exact' ? styles.exact : styles.close}`}>
                   {c.match === 'exact' ? 'Exact match' : 'Close match'}
                 </span>
-                <span className={`${styles.chip} ${c.band === 'needs-justification' ? styles.bandWarn : styles.bandPass}`}>
-                  {c.distanceMiles.toFixed(1)} mi{c.band === 'needs-justification' ? ' · needs justification' : ''}
-                </span>
+                {c.band === 'beyond-limit' ? (
+                  <span className={`${styles.chip} ${styles.bandBlock}`}>
+                    {c.distanceMiles.toFixed(1)} mi · Outside 5 mi · Rule 4
+                  </span>
+                ) : (
+                  <span className={`${styles.chip} ${c.band === 'needs-justification' ? styles.bandWarn : styles.bandPass}`}>
+                    {c.distanceMiles.toFixed(1)} mi{c.band === 'needs-justification' ? ' · needs justification' : ''}
+                  </span>
+                )}
               </p>
               <p className={styles.meta}>
                 {formatCents(c.rentCents)}/mo · {c.bedrooms} bd · {c.bathrooms} ba · {c.sqft.toLocaleString()} sq ft
@@ -52,7 +59,12 @@ export function CandidateList({
           </li>
         ))}
       </ul>
-      {attribution && <p className={styles.attribution}>{attribution}</p>}
+      {anyBeyond && (
+        <p className={styles.legend}>
+          Comps past 5 miles are shown for context. Rule 4 blocks them at calculation unless the methodology changes.
+        </p>
+      )}
+      {attribution &&<p className={styles.attribution}>{attribution}</p>}
     </>
   );
 }

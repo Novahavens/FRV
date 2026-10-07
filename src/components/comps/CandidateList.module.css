@@ -13,6 +13,9 @@
 .close { background: var(--surface-sunken); color: var(--ink-secondary); border: 1px solid var(--border-subtle); }
 .bandPass { background: var(--pass-subtle); color: var(--pass-ink); }
 .bandWarn { background: var(--warn-subtle); color: var(--warn-ink); }
+.beyond { background: var(--block-subtle); border-color: color-mix(in srgb, var(--block-base) 35%, var(--border-subtle)); }
+.bandBlock { background: var(--block-subtle); color: var(--block-ink); border: 1px solid var(--block-base); }
+.legend { margin: 0; font-size: 12px; line-height: 17px; color: var(--block-ink); }
 .actions { display: flex; gap: var(--space-1); }
 .attribution { margin: 0; font-size: 11px; color: var(--ink-tertiary); }
 @media (max-width: 640px) {

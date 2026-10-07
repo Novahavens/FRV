@@ -103,7 +103,7 @@ Management fee defaults to **$240**, is editable per claim, and accepts zero. Mu
 <td width="50%" valign="top"><img alt="Final FRV report for the Coppell reference claim" src="docs/assets/report-preview.png"></td>
 </tr>
 <tr>
-<td><sub>The figure updates as you type. Submit is the only state change.</sub></td>
+<td><sub>The figure updates as you type. Submit is the only state change. <em>Prepared by</em> is a dropdown of account managers, not free text.</sub></td>
 <td><sub>Section order follows the Alacrity format adjusters already read. The PDF is the same model, rendered server-side.</sub></td>
 </tr>
 </table>
@@ -217,7 +217,7 @@ Paste a Zillow listing URL and the comp fills itself: rent, bedrooms, bathrooms,
 This runs through **Firecrawl's catalogued Zillow capability**, approved by Will and Lou in October 2026. Its scope is deliberately narrow:
 
 - **`properties/rental`** — metadata for the one listing the account manager chose.
-- **`properties/rental_search`** — *Find comparables*: a shortlist of active rentals near the loss that fit it (bedrooms ±1, bathrooms ±1, size ±15%, no apartment communities). The operator chooses the radius: 2.5 miles by default, with a picker for 2.5 / 3 / 4 / 5 miles. Nothing widens automatically, and 5 is the cap because Rule 4 blocks anything further. Zillow's search is region-based, so 2.5 miles searches the ZIP and 3–5 miles adds the city (more pages, more Firecrawl credits, slower); distance is then filtered by Haversine. Among eligible listings the most like the loss comes first (bedrooms, bathrooms, size, single-family), nearest as the tiebreaker, and never rent. Cards read "Exact match" or "Close match". A searching panel shows progress and locks the controls; thin or empty results suggest the next radius, and at 5 miles suggest pasting URLs by hand. *Filter results* (home type, pets, available-by date, exact beds, exact baths) narrows the list instantly from facts the search already returns; amenities such as garage or pool are not in those records and are not fetched. The account manager picks; picking runs the single-listing lookup so every rule still applies. Comp selection stays human because geography is where FRVs go wrong, and no tool reliably tells one side of a boundary road from the other.
+- **`properties/rental_search`** — *Find comparables*: a shortlist of active rentals near the loss that fit it (bedrooms ±1, bathrooms ±1, size ±15%, no apartment communities). The operator chooses the radius: 2.5 miles by default, with a picker for 2.5 / 3 / 4 / 5 / 10 / 25 / 50 / 100 miles. Nothing widens automatically. **Results are unfurnished homes only.** Zillow's search can restrict *to* furnished but not away from it, so each search also pulls one `furnished=true` page per region and subtracts those listings before ranking (one extra Firecrawl call per region); Rule 1's full-text check on pick remains the final gate. Zillow's search is region-based, so 2.5 miles searches the ZIP and 3–5 miles adds the city (more pages, more Firecrawl credits, slower); past 5 miles it adds the state too (ZIP + city + state, 4 pages per region, 10 in all). Distance is then filtered by Haversine. Zillow has no radius search, so **coverage thins as the radius grows**: a 100-mile search is the widest the tool can run, not an exhaustive one. Candidates past 5 miles show a light red hue and an "Outside 5 mi · Rule 4" chip. The Use button stays enabled, but Rule 4 is unchanged: the engine still blocks a comp past 5 miles at calculation, so such a comp cannot lock. Among eligible listings the most like the loss comes first (bedrooms, bathrooms, size, single-family), nearest as the tiebreaker, and never rent. Cards read "Exact match" or "Close match". A searching panel shows progress and locks the controls; thin or empty results suggest the next radius (5 → 10 → 25 → 50 → 100; at 100 the copy says it is the widest search) and then pasting URLs by hand. *Filter results* (home type, pets, available-by date, exact beds, exact baths) narrows the list instantly from facts the search already returns; amenities such as garage or pool are not in those records and are not fetched. The account manager picks; picking runs the single-listing lookup so every rule still applies. Comp selection stays human because geography is where FRVs go wrong, and no tool reliably tells one side of a boundary road from the other.
 - **Every field stays editable**, and the audit trail records which ones the operator changed. The lookup saves typing; it is never the source of truth.
 - **Expired listings are refused.** A comp that is no longer for rent is not evidence.
 - **The data remains Zillow's.** Records carry an attribution string, and any report built from them prints it.
@@ -309,6 +309,9 @@ Production sits behind Vercel **password protection** rather than Vercel SSO, so
 | `0002_pin_function_search_path.sql` | Pins `search_path` on every function (Supabase lint 0011) |
 | `0003_fix_claims_guard_return_on_delete.sql` | BEFORE DELETE triggers must return `OLD`, not `NEW` |
 | `0004_calculations_multiplier_tiers.sql` | Stores the multiplier schedule each calculation used |
+| `0005_account_managers.sql` | `account_managers (name, active, sort_order)` — the *Prepared by* list; seeded with Fazal Abed, William, Louise Jaffe |
+
+*Prepared by* is chosen from that table, so a name can be added or retired without a deploy. `listAccountManagers()` loads the active names and the server action rejects any name not on the list. Without Supabase the form falls back to `DEFAULT_ACCOUNT_MANAGERS` in `src/lib/account-managers.ts`.
 
 `open_revision(claim_id, reason, actor, note)` is the one sanctioned route through the lock. It sets a transaction-scoped flag, writes a reason-coded `revisions` row, and reopens the claim at the next version. There is no way to hold the window open.
 
@@ -332,7 +335,7 @@ This repo is set up for [Claude Code](https://claude.ai/code):
 |:--|:--|
 | ✅ | Calculation core, validation, fixtures |
 | ✅ | Schema with trigger-enforced locking and `open_revision()` |
-| ✅ | One-page intake with live figure, editable multiplier schedule, Firecrawl listing lookup and *Find comparables* shortlist (operator-chosen radius, likeness ranking, result filters) |
+| ✅ | One-page intake with live figure, editable multiplier schedule, Firecrawl listing lookup and *Find comparables* shortlist (operator-chosen radius to 100 miles, unfurnished only, likeness ranking, result filters) |
 | ✅ | Google Places autocomplete on the loss address (optional key; plain input without it) |
 | ✅ | Street View photo and aerial map with loss + comp pins on the report (optional server key) |
 | ✅ | Report — web preview and PDF from one view-model, with attribution |
@@ -340,7 +343,8 @@ This repo is set up for [Claude Code](https://claude.ai/code):
 | ✅ | Deployed to Vercel, verified end to end in production |
 | ◻️ | Revision flow UI |
 | ◻️ | Claim list |
-| ◻️ | Authentication — deferred; *Prepared by* writes to every audit row until then |
+| ✅ | *Prepared by* dropdown backed by an `account_managers` table, validated server-side |
+| ◻️ | Authentication — deferred; *Prepared by* (a chosen name, not a login) writes to every audit row until then |
 | ✅ | Nova Havens logo on the web and PDF report |
 
 ## Not built, on purpose

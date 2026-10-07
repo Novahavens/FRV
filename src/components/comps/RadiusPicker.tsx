@@ -35,7 +35,7 @@ export function RadiusPicker({
           );
         })}
       </div>
-      <span className={styles.helper}>Comps past 5 miles are blocked by Rule 4.</span>
+      <span className={styles.helper}>Past 5 miles is outside Rule 4 — shown for context, blocked at calculation.</span>
     </div>
   );
 }
