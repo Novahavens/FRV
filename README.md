@@ -226,6 +226,12 @@ Zillow itself has offered no public API since September 2021, and its partner pr
 
 **Zillow is the only search source, on purpose.** A second concurrent source was considered in October 2026 — Furnished Finder specifically. It was declined: Furnished Finder's inventory is furnished by definition, which Rule 1 rejects outright, and Firecrawl's catalogue has no provider for it. The other catalogued rental searches (Redfin, Craigslist) do not return the coordinates and square footage the shortlist filter needs. See [the decision log](docs/DECISIONS.md#comp-search-stays-zillow-only-furnished-finder-declined-october-2026).
 
+## Report imagery
+
+When `GOOGLE_MAPS_SERVER_KEY` is set, the report shows a **Street View snapshot** of the loss address in the loss-card photo slot and a **hybrid aerial map** beside the headline figure — the loss address as a red "L" pin, the three comparables as pins 1–3 in their persisted order. Both appear on the web report and in the PDF, which stays one page.
+
+The key is server-only: the web report loads the images through `/api/claims/:id/street-view` and `/api/claims/:id/map`, and the PDF route fetches the bytes directly, so the key never reaches a browser. Imagery is fetched when the report renders, not stored — coordinates are already persisted, so the pins cannot move. Without the key, or where Street View has no coverage, the report renders as before (house placeholder, no map). This is static imagery on the finished report, not a map on the intake form; see [the decision log](docs/DECISIONS.md#the-report-carries-imagery-street-view-and-an-aerial-map-october-2026).
+
 ## Loss address
 
 The loss address field offers **Google Places autocomplete** when `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` is set: suggestions appear as the account manager types (US addresses only), and picking one fills the address and its coordinates in one step. Without the key the field is a plain input and coordinates are looked up through the US Census geocoder when the field loses focus — exactly as before. Either way the coordinates are captured once at intake and stored, because Rule 4 depends on them.
@@ -259,6 +265,7 @@ Without Supabase configured, the app renders the Coppell reference claim and say
 | `SUPABASE_SERVICE_ROLE_KEY` | Server-only. A new-style `sb_secret_…` key works here |
 | `FIRECRAWL_API_KEY` | Optional. Empty means manual comp entry |
 | `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` | Optional. Places API (New) key, HTTP-referrer restricted. Empty means a plain address field with Census geocoding |
+| `GOOGLE_MAPS_SERVER_KEY` | Optional. Server-only key for Maps Static API + Street View Static API, API-restricted (no referrer restriction). Empty means no Street View photo and no aerial map on the report |
 
 To run against a real database:
 
@@ -327,6 +334,7 @@ This repo is set up for [Claude Code](https://claude.ai/code):
 | ✅ | Schema with trigger-enforced locking and `open_revision()` |
 | ✅ | One-page intake with live figure, editable multiplier schedule, Firecrawl listing lookup and *Find comparables* shortlist (operator-chosen radius, likeness ranking, result filters) |
 | ✅ | Google Places autocomplete on the loss address (optional key; plain input without it) |
+| ✅ | Street View photo and aerial map with loss + comp pins on the report (optional server key) |
 | ✅ | Report — web preview and PDF from one view-model, with attribution |
 | ✅ | Stored-figure reads, seed data, health check, env validation |
 | ✅ | Deployed to Vercel, verified end to end in production |
@@ -337,7 +345,7 @@ This repo is set up for [Claude Code](https://claude.ai/code):
 
 ## Not built, on purpose
 
-No comp discovery. No maps. No amenity fields. No market-value input. No insured-facing views — the insured never sees the FRV.
+No comp discovery. No interactive map on the intake form (the report carries static imagery only). No amenity fields. No market-value input. No insured-facing views — the insured never sees the FRV.
 
 Choices that look odd from the outside are recorded in [`docs/DECISIONS.md`](docs/DECISIONS.md) so nobody re-litigates them in six months without the context that settled them.
 

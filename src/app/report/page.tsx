@@ -4,6 +4,7 @@ import { ReportSheet } from '@/components/report/ReportSheet';
 import { loadLockedClaim } from '@/lib/db/claims';
 import { DEMO_CLAIM_ID, demoClaim } from '@/lib/report/demo';
 import { isConfigured } from '@/lib/env';
+import { reportImagery } from '@/lib/maps/report-imagery';
 import styles from './page.module.css';
 
 export const dynamic = 'force-dynamic';
@@ -22,10 +23,12 @@ export default async function ReportPreviewPage({
 
   if (!claim) notFound();
 
+  const imagery = await reportImagery(claim);
   const model = buildReportModel(claim.loss, claim.calculation, {
     status: claim.status === 'locked' ? 'Final' : 'Draft',
     version: claim.version,
-    photoUrl: claim.photoUrl,
+    photoUrl: imagery.photoUrl,
+    mapUrl: imagery.mapUrl,
     attribution: claim.attribution,
   });
 

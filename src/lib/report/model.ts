@@ -67,6 +67,13 @@ export interface ReportModel {
     caption: string;
   };
 
+  /**
+   * Aerial map of the loss address and the three comps, when imagery is
+   * configured. `url` is the app's own image route (the Google key never
+   * reaches the browser); the PDF renderer receives the bytes separately.
+   */
+  map: { url: string; caption: string } | null;
+
   /** The averaged figures — Nova Havens' addition to the Alacrity layout. */
   averaged: ReportRow[];
 
@@ -106,6 +113,7 @@ export function buildReportModel(
     status?: 'Draft' | 'Final';
     version?: number;
     photoUrl?: string | null;
+    mapUrl?: string | null;
     attribution?: string | null;
   } = {},
 ): ReportModel {
@@ -133,6 +141,10 @@ export function buildReportModel(
       amount: formatCents(calculation.averagedFrvCents),
       caption: `Approximate total monthly cost with furniture · ${termLabel} minimum lease term`,
     },
+
+    map: options.mapUrl
+      ? { url: options.mapUrl, caption: 'Loss address (L) and comparables 1–3. Imagery © Google.' }
+      : null,
 
     averaged: [
       { label: 'Approximate rent for the property', value: formatCents(calculation.averagedBaseRentCents) },

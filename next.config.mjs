@@ -12,6 +12,7 @@ const nextConfig = {
       './node_modules/pdfkit/js/standard-fonts/**',
       './node_modules/pdfkit/js/data/**',
       './public/brand/**',
+      './public/images/**',
     ],
   },
 };

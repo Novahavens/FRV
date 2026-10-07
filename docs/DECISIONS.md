@@ -113,6 +113,21 @@ A second concurrent search source was proposed for *Find comparables*, with Furn
 
 If a second *unfurnished* source with coordinates and square footage becomes available, it belongs behind the same `ListingProvider` interface and the same `rankCandidates` filter, run concurrently with Zillow and merged closest-first. Nothing in the form would change.
 
+## The report carries imagery: Street View and an aerial map (October 2026)
+
+Requested by Fazal, October 2026. This qualifies the original "no maps" exclusion, which was about *comp discovery by map* — an interactive map on the intake form that would steer selection. That exclusion stands. What is added is **static imagery on the finished report**, after the figure is locked:
+
+- **Street View** of the loss address in the loss-card photo slot (the house placeholder remains the fallback when there is no coverage).
+- **A hybrid aerial map** beside the headline figure: the loss address as a red "L" pin, the three comparables as pins 1–3 in their persisted high-to-low order. It shows the adjuster the geography Rule 4 was applied to; it does not change any figure.
+
+Terms of the implementation:
+
+- **Server-only key.** `GOOGLE_MAPS_SERVER_KEY` is read only on the server. The web report loads images through the app's own routes (`/api/claims/[id]/street-view`, `/api/claims/[id]/map`); the PDF route fetches the bytes directly. The key never appears in HTML, image URLs or error responses.
+- **Fetched on render, not stored.** Coordinates are already persisted, so the pins cannot move; only the imagery can age. Storing the images was considered and declined — it needs a bucket, a migration and a lock-time upload, and Google's terms limit caching of imagery.
+- **Optional.** Without the key, the report renders exactly as before. The build passes with no env vars.
+- **Report only.** Not on the intake form, where a map would do the thing the original decision guards against.
+- **One page.** The map sits in the hero row at the loss card's height, so the PDF stays a single A4 page.
+
 ## Find comps: likeness first, radius is the operator's choice (October 2026)
 
 Fazal, 7 October 2026. Revises the ordering and radius terms of "Comp search is a shortlist, never a selection".

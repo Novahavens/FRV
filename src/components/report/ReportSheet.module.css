@@ -27,7 +27,14 @@
 
 /* The one bold moment: the figure, set large against a quiet loss card. */
 .hero { display: grid; grid-template-columns: 1fr 220px; gap: var(--space-6); align-items: start; }
+.heroWithMap { grid-template-columns: 1fr 240px 220px; }
 .heroText { display: flex; flex-direction: column; }
+.mapCard { margin: 0; display: flex; flex-direction: column; gap: var(--space-1); }
+.map {
+  display: block; width: 100%; height: 180px; object-fit: cover;
+  border: 1px solid var(--border-subtle); border-radius: var(--radius-sm);
+}
+.mapCaption { font-size: 10px; line-height: 14px; color: var(--ink-tertiary); }
 .title {
   margin: 0 0 var(--space-3); font-size: 15px; line-height: 22px;
   font-weight: 500; color: var(--ink-secondary);
@@ -128,6 +135,8 @@
   .sheet { padding: var(--space-5); }
   .hero, .twoUp, .compGrid { grid-template-columns: 1fr; }
   .figure { font-size: 48px; line-height: 48px; }
+  .heroWithMap { grid-template-columns: 1fr; }
+  .map { max-height: 200px; }
 }
 
 @media print {

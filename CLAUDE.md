@@ -26,7 +26,7 @@ npx vitest run -t "Coppell"                      # tests matching a name
 npm run build                # next build — must succeed with NO env vars set
 ```
 
-Env (see `.env.example`): `NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` (a Supabase `sb_secret_…` key works here), `FIRECRAWL_API_KEY` (optional; empty = manual comp entry), `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` (optional; empty = plain loss-address input, Census geocoding on blur). Without Supabase configured the app renders the Coppell demo claim and `/api/health` returns 503 — that is by design, not a bug.
+Env (see `.env.example`): `NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` (a Supabase `sb_secret_…` key works here), `FIRECRAWL_API_KEY` (optional; empty = manual comp entry), `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` (optional; empty = plain loss-address input, Census geocoding on blur), `GOOGLE_MAPS_SERVER_KEY` (optional, server-only; empty = no Street View / aerial map on the report). Without Supabase configured the app renders the Coppell demo claim and `/api/health` returns 503 — that is by design, not a bug.
 
 Database: apply `supabase/migrations/*.sql` in order, then optionally `supabase/seed.sql`.
 
@@ -55,7 +55,7 @@ Read `docs/DECISIONS.md` before "fixing" any of these:
 - Validation throws instead of warning.
 - There is no `market_value` column and never should be.
 - The evaluation-note wording about amenities is reproduced verbatim from reference reports despite the tool having no amenity fields (open with Will).
-- Not built on purpose: comp discovery, maps, amenity fields, insured-facing views.
+- Not built on purpose: comp discovery, an interactive map on the intake form, amenity fields, insured-facing views. (The *report* does carry static Street View + aerial-map imagery when `GOOGLE_MAPS_SERVER_KEY` is set — `src/lib/maps/`, served through `/api/claims/[id]/street-view|map` so the key stays server-side. Optional; nothing renders differently without it.)
 
 ## Reference fixtures
 
