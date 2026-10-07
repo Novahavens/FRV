@@ -2,8 +2,10 @@
 
 import { useActionState, useMemo, useRef, useState, useTransition } from 'react';
 import {
+  DEFAULT_SEARCH_RADIUS_MILES,
   MULTIPLIER_TIERS,
   REQUIRED_COMP_COUNT,
+  SEARCH_RADIUS_STEPS,
   calculateFrv,
   formatCents,
   markupLabel,
@@ -20,7 +22,12 @@ import {
 import { Button, Field, RuleBanner } from '@/components/ui/primitives';
 import { AddressAutocomplete } from '@/components/forms/AddressAutocomplete';
 import { FrvSummary } from '@/components/frv/FrvSummary';
-import type { CompCandidate, SearchResult } from '@/lib/listings/types';
+import { RadiusPicker } from '@/components/comps/RadiusPicker';
+import { SearchingPanel } from '@/components/comps/SearchingPanel';
+import { CandidateFilters } from '@/components/comps/CandidateFilters';
+import { CandidateList } from '@/components/comps/CandidateList';
+import { EMPTY_FILTER, type CandidateFilter, type CompCandidate, type SearchResult } from '@/lib/listings/types';
+import { filterCandidates, filterOptions } from '@/lib/listings/filters';
 import { geocode, lookupListing, searchComps, submitFrv, type SubmitState } from './actions';
 import styles from './ClaimForm.module.css';
 
@@ -214,15 +221,19 @@ export function ClaimForm() {
    */
   const [searching, startSearch] = useTransition();
   const [search, setSearch] = useState<SearchResult | null>(null);
+  const [radius, setRadius] = useState<number>(DEFAULT_SEARCH_RADIUS_MILES);
+  const [filter, setFilter] = useState<CandidateFilter>(EMPTY_FILTER);
 
   const canSearch = Boolean(loss) && !searching;
 
   const findComps = () => {
     if (!loss) return;
+    setFilter(EMPTY_FILTER);
     startSearch(async () => {
       setSearch(await searchComps({
         address: loss.address, lat: loss.lat, lng: loss.lng,
         bedrooms: loss.bedrooms, bathrooms: loss.bathrooms, sqft: loss.sqft,
+        radiusMiles: radius,
       }));
     });
   };
@@ -231,7 +242,13 @@ export function ClaimForm() {
     handleUrlPaste(slot, candidate.url);
   };
 
-  const slotLabel = (i: number) => (comps[i]?.url ? `Replace ${i + 1}` : `Use as ${i + 1}`);
+  const found = search?.ok ? search.candidates : null;
+  const shown = useMemo(
+    () => (found && loss ? filterCandidates(found, filter, { bedrooms: loss.bedrooms, bathrooms: loss.bathrooms }) : []),
+    [found, filter, loss],
+  );
+  const options = useMemo(() => filterOptions(found ?? []), [found]);
+  const nextRadius = SEARCH_RADIUS_STEPS.find((r) => r > (search?.ok ? search.radiusMiles : radius)) ?? null;
 
   const readyComps: Comp[] | null = useMemo(() => {
     const built = comps.map((c, i): Comp | null => {
@@ -351,14 +368,16 @@ export function ClaimForm() {
         </section>
 
         <section className={styles.card} aria-labelledby="find-comps-title">
+          <div>
+            <h2 id="find-comps-title" className={styles.cardTitle}>Find comparables</h2>
+            <p className={styles.findNote}>
+              Active Zillow rentals near the loss address, most like it first. You choose the radius
+              and which three.
+            </p>
+          </div>
+
           <div className={styles.findRow}>
-            <div>
-              <h2 id="find-comps-title" className={styles.cardTitle}>Find comparables</h2>
-              <p className={styles.findNote}>
-                Active Zillow rentals near the loss address that fit it on bedrooms, bathrooms and
-                size. Closest first. You choose which three.
-              </p>
-            </div>
+            <RadiusPicker value={radius} onChange={setRadius} disabled={searching} />
             <Button type="button" variant="secondary" onClick={findComps} disabled={!canSearch} loading={searching}
               id="find-comps">
               {searching ? 'Searching' : search ? 'Search again' : 'Find comps'}
@@ -369,48 +388,38 @@ export function ClaimForm() {
             <p className={styles.findNote}>Enter the loss address, bedrooms, bathrooms and square footage to search.</p>
           )}
 
-          {search && !search.ok && (
+          {searching && <SearchingPanel radiusMiles={radius} />}
+
+          {!searching && search && !search.ok && (
             <RuleBanner tone="warn" message="No shortlist this time." detail={search.message} />
           )}
 
-          {search?.ok && search.candidates.length === 0 && (
-            <RuleBanner tone="warn" message={`Nothing within five miles of ${search.searched} fits the loss property.`}
-              detail="Widen by hand: paste listing URLs into the comparables below. Comps past five miles are blocked either way." />
+          {!searching && search?.ok && search.candidates.length === 0 && (
+            <RuleBanner tone="warn"
+              message={`Nothing within ${search.radiusMiles} miles fits the loss property.`}
+              detail={nextRadius
+                ? `Widen to ${nextRadius} miles and search again.`
+                : 'Comps past five miles are blocked by Rule 4. Paste listing URLs into the comparables below by hand.'} />
           )}
 
-          {search?.ok && search.candidates.length > 0 && (
+          {!searching && search?.ok && search.candidates.length > 0 && search.candidates.length < 3 && (
+            <RuleBanner tone="info"
+              message={`Only ${search.candidates.length} within ${search.radiusMiles} miles.`}
+              detail={nextRadius
+                ? `You need three. Widen to ${nextRadius} miles and search again, or paste a listing URL below.`
+                : 'You need three. Comps past five miles are blocked by Rule 4, so paste listing URLs below by hand.'} />
+          )}
+
+          {!searching && search?.ok && search.candidates.length > 0 && (
             <>
-              {search.widened && (
-                <RuleBanner tone="warn" message="Fewer than six matches within two miles, so the list reaches to five."
-                  detail="Anything marked 2–5 mi will need a written justification before you can lock." />
+              <CandidateFilters filter={filter} onChange={setFilter} options={options}
+                total={search.candidates.length} shown={shown.length} />
+              {shown.length === 0 ? (
+                <p className={styles.findNote}>No results match these filters. Clear a filter to see more.</p>
+              ) : (
+                <CandidateList candidates={shown} slots={comps.map((c) => ({ filled: Boolean(c.url) }))}
+                  onUse={useCandidate} disabled={fetching !== null} attribution={search.attribution} />
               )}
-              <ul className={styles.candidates} aria-label="Comparable candidates">
-                {search.candidates.map((c) => (
-                  <li key={c.zpid} className={styles.candidate}>
-                    <div>
-                      <p className={styles.candidateAddress}>
-                        <a href={c.url} target="_blank" rel="noreferrer">{c.address}</a>
-                        <span className={`${styles.candidateBand} ${c.band === 'needs-justification' ? styles.bandWarn : styles.bandPass}`}>
-                          {c.distanceMiles.toFixed(1)} mi{c.band === 'needs-justification' ? ' · needs justification' : ''}
-                        </span>
-                      </p>
-                      <p className={styles.candidateMeta}>
-                        {formatCents(c.rentCents)}/mo · {c.bedrooms} bd · {c.bathrooms} ba · {c.sqft.toLocaleString()} sq ft
-                        {c.homeType ? ` · ${c.homeType.toLowerCase().replace(/_/g, ' ')}` : ''}
-                      </p>
-                    </div>
-                    <div className={styles.candidateActions}>
-                      {comps.map((_, i) => (
-                        <Button key={i} type="button" size="sm" variant="ghost" onClick={() => useCandidate(c, i)}
-                          disabled={fetching !== null}>
-                          {slotLabel(i)}
-                        </Button>
-                      ))}
-                    </div>
-                  </li>
-                ))}
-              </ul>
-              {search.attribution && <p className={styles.attribution}>{search.attribution}</p>}
             </>
           )}
         </section>

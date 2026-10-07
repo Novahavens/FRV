@@ -1,4 +1,4 @@
-import { RADIUS_BANDS, SQFT_TOLERANCE, classifyDistance, distanceMiles } from '@/lib/frv';
+import { DEFAULT_SEARCH_RADIUS_MILES, RADIUS_BANDS, SQFT_TOLERANCE, classifyDistance, distanceMiles } from '@/lib/frv';
 import type { RadiusBand } from '@/lib/frv';
 import type { ZillowRentalRecord } from './zillow-record';
 
@@ -22,6 +22,8 @@ export interface ZillowSearchRecord extends ZillowRentalRecord {
   zpid?: string | number | null;
   is_building?: boolean | null;
   home_type?: string | null;
+  pets?: string[] | null;
+  available_from?: string | null;
 }
 
 export interface CompCandidate {
@@ -35,8 +37,19 @@ export interface CompCandidate {
   lat: number;
   lng: number;
   homeType: string | null;
+  /** Pet kinds the listing allows, as Zillow reports them (lower-case). */
+  pets: string[];
+  /** ISO date the unit is available from, when Zillow reports one. */
+  availableFrom: string | null;
   distanceMiles: number;
   band: Exclude<RadiusBand, 'beyond-limit'>;
+  /**
+   * How closely this listing matches the loss on beds, baths, size and home
+   * type: 1 is identical, 0 is the edge of eligibility. The sort key.
+   */
+  likeness: number;
+  /** 'exact' when beds and baths both match the loss and size is within 5%. */
+  match: 'exact' | 'close';
   attribution: string | null;
 }
 
@@ -47,18 +60,15 @@ export interface CandidateCriteria {
   bathroomVariance: number;
   /** Square footage tolerance as a fraction. Default SQFT_TOLERANCE (15%). */
   sqftTolerance: number;
-  /** Search inside this radius first. Default RADIUS_BANDS.acceptable (2 mi). */
-  preferredRadiusMiles: number;
-  /** Widen to RADIUS_BANDS.needsJustification only when fewer than this remain. Default 6. */
-  minimumBeforeWidening: number;
+  /** Offer nothing farther than this. Operator-chosen; default 2.5 mi, never past Rule 4's 5 mi. */
+  radiusMiles: number;
 }
 
 export const DEFAULT_CRITERIA: CandidateCriteria = {
   bedroomVariance: 1,
   bathroomVariance: 1,
   sqftTolerance: SQFT_TOLERANCE,
-  preferredRadiusMiles: RADIUS_BANDS.acceptable,
-  minimumBeforeWidening: 6,
+  radiusMiles: DEFAULT_SEARCH_RADIUS_MILES,
 };
 
 export interface LossShape {
@@ -72,18 +82,49 @@ export interface LossShape {
 const finite = (v: unknown): number | null =>
   typeof v === 'number' && Number.isFinite(v) ? v : null;
 
+/*
+ * Likeness weights (sum 1.00). Eligibility gates run first; this only orders
+ * what already qualified.
+ *   bedrooms   0.35  exact; 0 when one off
+ *   bathrooms  0.25  exact; 0.15 half a bath off; 0 a full bath off
+ *   size       0.30  linear: 1 at identical sqft, 0 at the 15% tolerance edge
+ *   home type  0.10  SINGLE_FAMILY (the report calls every comp a single family home)
+ */
+const W_BEDS = 0.35;
+const W_BATHS_EXACT = 0.25;
+const W_BATHS_HALF = 0.15;
+const W_SQFT = 0.3;
+const W_HOME_TYPE = 0.1;
+
+export function scoreLikeness(
+  loss: Pick<LossShape, 'bedrooms' | 'bathrooms' | 'sqft'>,
+  candidate: { bedrooms: number; bathrooms: number; sqft: number; homeType: string | null },
+  sqftTolerance: number = SQFT_TOLERANCE,
+): number {
+  let score = 0;
+  if (candidate.bedrooms === loss.bedrooms) score += W_BEDS;
+  const bathGap = Math.abs(candidate.bathrooms - loss.bathrooms);
+  if (bathGap === 0) score += W_BATHS_EXACT;
+  else if (bathGap <= 0.5) score += W_BATHS_HALF;
+  const band = loss.sqft * sqftTolerance;
+  const sizeFit = band > 0 ? 1 - Math.abs(candidate.sqft - loss.sqft) / band : 0;
+  score += W_SQFT * Math.min(1, Math.max(0, sizeFit));
+  if (candidate.homeType === 'SINGLE_FAMILY') score += W_HOME_TYPE;
+  return Math.min(1, Math.max(0, score));
+}
+
 /**
  * Filter and rank search records against the loss property.
  *
- * Order of operations mirrors the rules an operator would apply by hand:
- * drop what cannot be a comp (apartment communities, delisted, incomplete),
- * keep what is like-for-like (bedrooms, bathrooms, size), then geography — the
- * two-mile band first, widening to five only when the near set is thin. Past
- * five miles nothing is offered, because the engine would block it anyway.
+ * Gates mirror the rules an operator would apply by hand: drop what cannot be
+ * a comp (apartment communities, delisted, incomplete), keep what is
+ * like-for-like (bedrooms, bathrooms, size), and keep what is inside the radius
+ * the operator chose (never past Rule 4's five miles).
  *
- * Within a band, closest first. Rent is deliberately not a ranking input:
- * putting the highest rent at the top would steer selection, and the
- * methodology sorts high to low *after* the human has chosen.
+ * Within that eligible set: likeness first, distance as the tiebreaker. Rent is
+ * deliberately not a ranking input: putting the highest rent at the top would
+ * steer selection, and the methodology sorts high to low *after* the human has
+ * chosen.
  */
 export function rankCandidates(
   loss: LossShape,
@@ -91,6 +132,7 @@ export function rankCandidates(
   criteria: Partial<CandidateCriteria> = {},
 ): CompCandidate[] {
   const c = { ...DEFAULT_CRITERIA, ...criteria };
+  const radius = Math.min(c.radiusMiles, RADIUS_BANDS.needsJustification);
   const seen = new Set<string>();
   const qualified: CompCandidate[] = [];
 
@@ -119,8 +161,12 @@ export function rankCandidates(
     if (Math.abs(sqft - loss.sqft) / loss.sqft > c.sqftTolerance) continue;
 
     const miles = distanceMiles(loss, { lat, lng });
+    if (miles > radius) continue;
     const { band } = classifyDistance(miles);
     if (band === 'beyond-limit') continue;
+
+    const homeType = r.home_type ?? null;
+    const exact = beds === loss.bedrooms && baths === loss.bathrooms && Math.abs(sqft - loss.sqft) / loss.sqft <= 0.05;
 
     seen.add(zpid);
     qualified.push({
@@ -133,17 +179,20 @@ export function rankCandidates(
       sqft,
       lat,
       lng,
-      homeType: r.home_type ?? null,
+      homeType,
+      pets: Array.isArray(r.pets) ? r.pets.filter((p): p is string => typeof p === 'string').map((p) => p.toLowerCase()) : [],
+      availableFrom: typeof r.available_from === 'string' && r.available_from ? r.available_from : null,
       distanceMiles: miles,
       band,
+      likeness: scoreLikeness(loss, { bedrooms: beds, bathrooms: baths, sqft, homeType }, c.sqftTolerance),
+      match: exact ? 'exact' : 'close',
       attribution: r.attribution ?? null,
     });
   }
 
-  qualified.sort((a, b) => a.distanceMiles - b.distanceMiles);
-
-  const near = qualified.filter((q) => q.distanceMiles <= c.preferredRadiusMiles);
-  if (near.length >= c.minimumBeforeWidening) return near;
+  qualified.sort(
+    (a, b) => b.likeness - a.likeness || a.distanceMiles - b.distanceMiles || a.zpid.localeCompare(b.zpid),
+  );
   return qualified;
 }
 
@@ -164,4 +213,18 @@ export function searchLocationFor(address: string): string | null {
     return tail || null;
   }
   return null;
+}
+
+/**
+ * Regions to query for a radius. Zillow searches by region, not radius: a ZIP
+ * covers roughly 2.5 mi; wider radii add the city (ZIP first so the nearest
+ * listings come from the tighter region). The radius filter does the real work.
+ */
+export function searchRegionsFor(address: string, radiusMiles: number): string[] {
+  const zip = /\b(\d{5})(?:-\d{4})?\b/.exec(address)?.[1] ?? null;
+  const parts = address.split(',').map((p) => p.trim()).filter(Boolean);
+  const cityState =
+    parts.length >= 2 ? parts.slice(-2).join(', ').replace(/\s+\d{5}(-\d{4})?$/, '').trim() || null : null;
+  const regions = radiusMiles <= 2.5 ? [zip ?? cityState] : [zip, cityState];
+  return [...new Set(regions.filter((r): r is string => !!r))];
 }
