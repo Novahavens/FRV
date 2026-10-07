@@ -4,6 +4,9 @@ import type { ListingProvider, LookupResult, SearchResult } from './types';
 
 export type { ListingFacts, LookupResult, ListingSource, SearchQuery, SearchResult } from './types';
 export type { CompCandidate } from './candidates';
+export type { CandidateFilter } from './types';
+export { EMPTY_FILTER } from './types';
+export { filterCandidates, filterOptions, isEmptyFilter } from './filters';
 
 /**
  * Firecrawl when FIRECRAWL_API_KEY is set, otherwise a manual provider that

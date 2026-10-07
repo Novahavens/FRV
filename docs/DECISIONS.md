@@ -60,6 +60,8 @@ The original decision below excluded `rental_search` outright. That was revisite
 
 What this is not: automatic comp selection. The PRD's reason for excluding discovery — geography is where FRVs go wrong — still holds, which is why the shortlist is filtered by the engine's own radius bands and the final choice is a person's.
 
+Ordering and radius were revised in October 2026 — see "Find comps: likeness first, radius is the operator's choice" below.
+
 ## Listing data comes through Firecrawl — narrowly
 
 Zillow retired its public API in September 2021. Its partner programme, Bridge Interactive, requires MLS membership. Commercial "Zillow APIs" are scraper wrappers.
@@ -110,3 +112,35 @@ A second concurrent search source was proposed for *Find comparables*, with Furn
 2. **No capability.** Firecrawl's catalogue has no Furnished Finder provider. The other catalogued rental searches (Redfin `properties/search`, Craigslist `housing/search`) return neither reliable coordinates nor square footage, both of which `rankCandidates` requires.
 
 If a second *unfurnished* source with coordinates and square footage becomes available, it belongs behind the same `ListingProvider` interface and the same `rankCandidates` filter, run concurrently with Zillow and merged closest-first. Nothing in the form would change.
+
+## Find comps: likeness first, radius is the operator's choice (October 2026)
+
+Fazal, 7 October 2026. Revises the ordering and radius terms of "Comp search is a shortlist, never a selection".
+
+**What changed**
+
+- **Radius is the operator's choice.** *Find comps* searches 2.5 miles by default. An always-visible picker offers 2.5 / 3 / 4 / 5 miles (`SEARCH_RADIUS_STEPS`). The automatic widening (two miles, widen to five when fewer than six) is removed. Five is the cap because Rule 4 blocks anything further.
+- **Widening is a deliberate click, because it costs something.** Zillow's search is region-based (ZIP or city, no radius). Up to 2.5 miles searches the ZIP (2 pages). 3–5 miles searches ZIP and city: more pages, more Firecrawl credits, slower. Distance is then filtered by Haversine.
+- **Likeness over distance.** Eligibility gates are unchanged: bedrooms ±1, bathrooms ±1, size ±15%, no apartment communities, active only, inside the radius. Within the eligible set, candidates are ranked by a likeness score: beds exact 0.35, baths exact 0.25 (half-bath off 0.15), size closeness 0.30, single-family 0.10. Distance breaks ties. Cards say "Exact match" (beds and baths equal, size within 5%) or "Close match".
+- **Busy state.** A searching panel shows a spinner, the radius, elapsed time and "please be patient" copy. Controls lock while it runs.
+- **Thin or empty results** suggest the next radius and searching again. At 5 miles they suggest pasting listing URLs by hand.
+- **Filter results.** Home type, pets allowed, available-by date, exact beds, exact baths. Deliberately not called "Amenities": these are facts Zillow's search records already carry, so filtering is instant and free.
+
+**Why**
+
+Closest-first put a small, distant-in-character house ahead of a near-identical one a little further out. An adjuster reads the comp for likeness to the loss; distance already has its own gate in Rule 4. Automatic widening spent credits and time on every thin search without the operator knowing. Rent was never the problem and stays out.
+
+The recorded rule becomes: **most like the loss first, closest as tiebreaker, never rent.** Ranking by rent would steer selection, so rent is still not a ranking input. High-to-low sorting happens after the human has chosen, as before.
+
+**What did not change**
+
+- Eligibility gates, the five-mile cap and Rule 4 bands.
+- Picking a candidate is pasting its URL: same `lookup`, same Rule 1, same audit trail.
+- The search writes nothing to a claim.
+- No amenity fields on the claim, the engine or the report. "No amenity fields" stands.
+
+**What this is not**
+
+- Not amenity matching. Garage, pool, laundry, A/C and yard are not in search records. Fetching the detail listing for every candidate costs 5 credits each; considered and declined.
+- Not automatic selection. The score orders a list; a person still chooses.
+- Not a ranking by rent, and not a change to the FRV arithmetic.

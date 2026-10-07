@@ -217,7 +217,7 @@ Paste a Zillow listing URL and the comp fills itself: rent, bedrooms, bathrooms,
 This runs through **Firecrawl's catalogued Zillow capability**, approved by Will and Lou in October 2026. Its scope is deliberately narrow:
 
 - **`properties/rental`** — metadata for the one listing the account manager chose.
-- **`properties/rental_search`** — *Find comparables*: a shortlist of active rentals near the loss that fit it (bedrooms ±1, bathrooms ±1, size ±15%, within two miles, widening to five only when the near set is thin). Closest first, never highest rent first. The account manager picks; picking runs the single-listing lookup so every rule still applies. Comp selection stays human because geography is where FRVs go wrong, and no tool reliably tells one side of a boundary road from the other.
+- **`properties/rental_search`** — *Find comparables*: a shortlist of active rentals near the loss that fit it (bedrooms ±1, bathrooms ±1, size ±15%, no apartment communities). The operator chooses the radius: 2.5 miles by default, with a picker for 2.5 / 3 / 4 / 5 miles. Nothing widens automatically, and 5 is the cap because Rule 4 blocks anything further. Zillow's search is region-based, so 2.5 miles searches the ZIP and 3–5 miles adds the city (more pages, more Firecrawl credits, slower); distance is then filtered by Haversine. Among eligible listings the most like the loss comes first (bedrooms, bathrooms, size, single-family), nearest as the tiebreaker, and never rent. Cards read "Exact match" or "Close match". A searching panel shows progress and locks the controls; thin or empty results suggest the next radius, and at 5 miles suggest pasting URLs by hand. *Filter results* (home type, pets, available-by date, exact beds, exact baths) narrows the list instantly from facts the search already returns; amenities such as garage or pool are not in those records and are not fetched. The account manager picks; picking runs the single-listing lookup so every rule still applies. Comp selection stays human because geography is where FRVs go wrong, and no tool reliably tells one side of a boundary road from the other.
 - **Every field stays editable**, and the audit trail records which ones the operator changed. The lookup saves typing; it is never the source of truth.
 - **Expired listings are refused.** A comp that is no longer for rent is not evidence.
 - **The data remains Zillow's.** Records carry an attribution string, and any report built from them prints it.
@@ -325,7 +325,7 @@ This repo is set up for [Claude Code](https://claude.ai/code):
 |:--|:--|
 | ✅ | Calculation core, validation, fixtures |
 | ✅ | Schema with trigger-enforced locking and `open_revision()` |
-| ✅ | One-page intake with live figure, editable multiplier schedule, Firecrawl listing lookup and *Find comparables* shortlist |
+| ✅ | One-page intake with live figure, editable multiplier schedule, Firecrawl listing lookup and *Find comparables* shortlist (operator-chosen radius, likeness ranking, result filters) |
 | ✅ | Google Places autocomplete on the loss address (optional key; plain input without it) |
 | ✅ | Report — web preview and PDF from one view-model, with attribution |
 | ✅ | Stored-figure reads, seed data, health check, env validation |

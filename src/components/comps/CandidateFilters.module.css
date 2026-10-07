@@ -1,0 +1,36 @@
+.filters {
+  display: flex; flex-direction: column; gap: var(--space-3); padding: var(--space-3);
+  border: 1px solid var(--border-subtle); border-radius: var(--radius-md); background: var(--surface-sunken);
+}
+.head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-3); flex-wrap: wrap; }
+.title { margin: 0; font-size: 13px; font-weight: 600; color: var(--ink-primary); }
+.count { font-size: 12px; color: var(--ink-secondary); font-family: var(--font-mono); }
+.group { border: 0; margin: 0; padding: 0; min-width: 0; display: flex; flex-direction: column; gap: var(--space-2); }
+.legend { padding: 0; font-size: 12px; font-weight: 500; color: var(--ink-secondary); }
+.chips { display: flex; flex-wrap: wrap; gap: var(--space-1); }
+.chip {
+  min-height: 28px; padding: 0 var(--space-3); border-radius: var(--radius-full);
+  border: 1px solid var(--border-default); background: var(--surface-raised); color: var(--ink-primary);
+  font-size: 12px; text-transform: capitalize; cursor: pointer;
+}
+.chip:hover { border-color: var(--border-strong); }
+.chip:focus-visible, .clear:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+.chipOn, .chipOn:hover { background: var(--accent-subtle); color: var(--accent-ink); border-color: var(--accent-base); font-weight: 600; }
+.row { display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--space-3) var(--space-4); }
+.date { display: flex; flex-direction: column; gap: var(--space-1); }
+.dateInput {
+  min-height: 32px; padding: 0 var(--space-2); border: 1px solid var(--border-default); border-radius: var(--radius-md);
+  background: var(--surface-raised); color: var(--ink-primary); font-family: var(--font-mono); font-size: 13px;
+}
+.dateInput:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+.check { display: flex; align-items: center; gap: var(--space-2); min-height: 32px; font-size: 13px; color: var(--ink-primary); cursor: pointer; }
+.check input { width: 16px; height: 16px; accent-color: var(--accent-base); }
+.clear {
+  min-height: 32px; margin-left: auto; padding: 0 var(--space-2); background: transparent; border: 0;
+  color: var(--accent-ink); font-size: 13px; cursor: pointer; text-decoration: underline;
+}
+.clear:disabled { color: var(--ink-tertiary); cursor: not-allowed; text-decoration: none; }
+@media (max-width: 640px) {
+  .row { flex-direction: column; align-items: stretch; }
+  .clear { margin-left: 0; align-self: flex-start; }
+}
