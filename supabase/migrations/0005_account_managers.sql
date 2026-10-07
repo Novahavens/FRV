@@ -17,7 +17,9 @@ create policy account_managers_read on account_managers for select using (true);
 
 -- Seeded here (not in seed.sql) because the form is unusable with an empty list.
 insert into account_managers (name, sort_order) values
-  ('Fazal Abed', 10),
-  ('William', 20),
-  ('Louise Jaffe', 30)
+  ('Dian', 10),
+  ('Aleshia', 20),
+  ('Lou', 30),
+  ('Mel', 40),
+  ('Keti', 50)
 on conflict (name) do nothing;

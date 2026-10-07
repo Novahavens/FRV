@@ -10,7 +10,9 @@ export interface AccountManager {
 }
 
 export const DEFAULT_ACCOUNT_MANAGERS: readonly AccountManager[] = [
-  { name: 'Fazal Abed' },
-  { name: 'William' },
-  { name: 'Louise Jaffe' },
+  { name: 'Dian' },
+  { name: 'Aleshia' },
+  { name: 'Lou' },
+  { name: 'Mel' },
+  { name: 'Keti' },
 ];

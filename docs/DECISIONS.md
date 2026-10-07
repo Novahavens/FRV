@@ -172,7 +172,7 @@ Fazal, 7 October 2026. *Prepared by* was free text. It is now a dropdown of acco
 
 - The list lives in a table, `account_managers (name, active, sort_order)` (migration `0005_account_managers.sql`), so a name can be added or retired without a deploy. Retiring sets `active = false`; the row stays, so the name on past audit rows still resolves.
 - `listAccountManagers()` in `src/lib/db/account-managers.ts` loads the active names. The server action rejects any name not on the list, so the dropdown is not the only guard.
-- Without Supabase the form falls back to `DEFAULT_ACCOUNT_MANAGERS` in `src/lib/account-managers.ts`, the same way the app falls back to the demo claim. Seeded with Fazal Abed, William and Louise Jaffe.
+- Without Supabase the form falls back to `DEFAULT_ACCOUNT_MANAGERS` in `src/lib/account-managers.ts`, the same way the app falls back to the demo claim. Seeded with Dian, Aleshia, Lou, Mel and Keti (Fazal, 7 Oct 2026).
 
 **What this is not**
 

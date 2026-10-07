@@ -309,7 +309,7 @@ Production sits behind Vercel **password protection** rather than Vercel SSO, so
 | `0002_pin_function_search_path.sql` | Pins `search_path` on every function (Supabase lint 0011) |
 | `0003_fix_claims_guard_return_on_delete.sql` | BEFORE DELETE triggers must return `OLD`, not `NEW` |
 | `0004_calculations_multiplier_tiers.sql` | Stores the multiplier schedule each calculation used |
-| `0005_account_managers.sql` | `account_managers (name, active, sort_order)` — the *Prepared by* list; seeded with Fazal Abed, William, Louise Jaffe |
+| `0005_account_managers.sql` | `account_managers (name, active, sort_order)` — the *Prepared by* list; seeded with Dian, Aleshia, Lou, Mel, Keti |
 
 *Prepared by* is chosen from that table, so a name can be added or retired without a deploy. `listAccountManagers()` loads the active names and the server action rejects any name not on the list. Without Supabase the form falls back to `DEFAULT_ACCOUNT_MANAGERS` in `src/lib/account-managers.ts`.
 

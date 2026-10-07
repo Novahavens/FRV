@@ -73,7 +73,7 @@ A `'block'` event makes `calculateFrv()` throw `ValidationFailedError`; a `'warn
 Not a methodology change and needs no sign-off; it is reference data.
 
 - **Add or retire a name:** edit the `account_managers (name, active, sort_order)` table in Supabase. New name: insert a row with `active = true` and a `sort_order`. Retire: set `active = false`, don't delete, so names on past audit rows still resolve. No deploy; `listAccountManagers()` in `src/lib/db/account-managers.ts` loads active names on each intake load.
-- **Fallback list:** `DEFAULT_ACCOUNT_MANAGERS` in `src/lib/account-managers.ts` is used when Supabase isn't configured. Keep it in step with the table when the roster changes materially. The seed in `0005_account_managers.sql` is Fazal Abed, William, Louise Jaffe.
+- **Fallback list:** `DEFAULT_ACCOUNT_MANAGERS` in `src/lib/account-managers.ts` is used when Supabase isn't configured. Keep it in step with the table when the roster changes materially. The seed in `0005_account_managers.sql` is Dian, Aleshia, Lou, Mel, Keti.
 - The server action in `claims/new/actions.ts` rejects a name not on the list. Don't loosen it to accept free text; the point is one canonical name per person in the audit trail.
 - Changing the table's shape is a new migration, never an edit to `0005`.
 
