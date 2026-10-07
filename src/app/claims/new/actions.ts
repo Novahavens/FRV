@@ -5,6 +5,8 @@ import { z } from 'zod';
 import { SEARCH_RADIUS_STEPS, calculateFrv, tiersFromStored, tiersToStored, type Comp, type LossProperty } from '@/lib/frv';
 import { db } from '@/lib/db/client';
 import { isConfigured } from '@/lib/env';
+import { listAccountManagers } from '@/lib/db/account-managers';
+import { isAccountManager } from '@/lib/account-managers-match';
 
 /**
  * Create a claim, store its comps, calculate, and lock — one transaction's
@@ -60,6 +62,11 @@ export async function submitFrv(_prev: SubmitState, formData: FormData): Promise
   }
 
   const { comps: compInput, preparedBy, justification, multiplierTiers: tiersInput, ...lossInput } = parsed.data;
+
+  const managers = await listAccountManagers();
+  if (!isAccountManager(preparedBy, managers)) {
+    return { error: 'Choose your name from the account manager list.' };
+  }
 
   let loss: LossProperty = lossInput;
   if (tiersInput) {

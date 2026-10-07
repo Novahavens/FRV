@@ -57,20 +57,27 @@ export const REQUIRED_COMP_COUNT = 3;
 /** Square footage tolerance against the loss property. */
 export const SQFT_TOLERANCE = 0.15;
 
-/** Concentric radius bands, in miles. Past the last one the system halts. */
+/**
+ * Concentric radius bands, in miles. Under 1 is clean, 1–2 acceptable, 2–5
+ * needs a written justification. 5–100 is the extended band (Fazal, October
+ * 2026): permitted without justification, shown in red as a cue and noted on
+ * the record. Past `limit` the system halts.
+ */
 export const RADIUS_BANDS = {
   clean: 1,
   acceptable: 2,
   needsJustification: 5,
+  limit: 100,
 } as const;
 
 /**
  * Radii the operator can choose for "Find comparables", in miles. The first
- * is the default; the last equals the Rule 4 limit, because a comp past it is
- * blocked by the engine and would be a shortlist of nothing. Widening is a
- * deliberate click, never automatic (October 2026).
+ * is the default. Steps past RADIUS_BANDS.needsJustification (5 mi) are the
+ * extended band: a comp from there is shown with a red hue as a cue and is
+ * permitted up to RADIUS_BANDS.limit. Widening is a deliberate click, never
+ * automatic (October 2026).
  */
-export const SEARCH_RADIUS_STEPS = [2.5, 3, 4, 5] as const;
+export const SEARCH_RADIUS_STEPS = [2.5, 3, 4, 5, 10, 25, 50, 100] as const;
 export type SearchRadiusMiles = (typeof SEARCH_RADIUS_STEPS)[number];
 export const DEFAULT_SEARCH_RADIUS_MILES: SearchRadiusMiles = 2.5;
 

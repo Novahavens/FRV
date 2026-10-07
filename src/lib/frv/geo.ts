@@ -26,13 +26,15 @@ export function distanceMiles(
   return 2 * EARTH_RADIUS_MILES * Math.asin(Math.min(1, Math.sqrt(h)));
 }
 
-export type RadiusBand = 'clean' | 'acceptable' | 'needs-justification' | 'beyond-limit';
+export type RadiusBand = 'clean' | 'acceptable' | 'needs-justification' | 'extended' | 'beyond-limit';
 
 export function classifyDistance(miles: number): { band: RadiusBand; tone: Tone } {
   if (miles < RADIUS_BANDS.clean) return { band: 'clean', tone: 'pass' };
   if (miles <= RADIUS_BANDS.acceptable) return { band: 'acceptable', tone: 'pass' };
   if (miles <= RADIUS_BANDS.needsJustification)
     return { band: 'needs-justification', tone: 'warn' };
+  // 5–100 miles: permitted, noted, never a gate (October 2026).
+  if (miles <= RADIUS_BANDS.limit) return { band: 'extended', tone: 'info' };
   return { band: 'beyond-limit', tone: 'block' };
 }
 

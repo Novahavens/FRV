@@ -18,7 +18,11 @@ export function SearchingPanel({ radiusMiles }: { radiusMiles: number }) {
       <span className={styles.spinner} aria-hidden="true" />
       <div className={styles.body}>
         <p className={styles.title}>Finding comparables within {radiusMiles} miles.</p>
-        <p className={styles.copy}>This usually takes 10–20 seconds — please be patient.</p>
+        <p className={styles.copy}>
+          {radiusMiles <= 5
+            ? 'This usually takes 10–20 seconds — please be patient.'
+            : 'This usually takes 20–60 seconds — wider searches pull more pages.'}
+        </p>
       </div>
       <span className={styles.elapsed}>{elapsed}s</span>
     </div>

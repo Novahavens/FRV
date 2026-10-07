@@ -44,8 +44,13 @@ describe('rankCandidates — what qualifies', () => {
     expect(rankCandidates(loss, [fit({ url: 'https://www.zillow.com/apartments/x/' })])).toHaveLength(0);
   });
 
-  it('never offers anything past five miles — the engine would block it', () => {
-    expect(rankCandidates(loss, [fit({ lat: milesNorth(5.5) })])).toHaveLength(0);
+  it('offers past-five-mile records only when the operator widened the radius, flagged extended', () => {
+    const r = fit({ lat: milesNorth(5.5) });
+    expect(rankCandidates(loss, [r])).toHaveLength(0);
+    expect(rankCandidates(loss, [r], { radiusMiles: 5 })).toHaveLength(0);
+    const wide = rankCandidates(loss, [r], { radiusMiles: 10 });
+    expect(wide).toHaveLength(1);
+    expect(wide[0]?.band).toBe('extended');
   });
 
   it('dedupes by zpid', () => {
@@ -64,8 +69,9 @@ describe('rankCandidates — radius', () => {
     expect(rankCandidates(loss, [fit({ lat: milesNorth(2.8) })])).toHaveLength(0);
   });
 
-  it('never goes past five miles even when asked for five', () => {
+  it('stops at the chosen radius: 5.5 mi is out at 5, in at 10', () => {
     expect(rankCandidates(loss, [fit({ lat: milesNorth(5.5) })], { radiusMiles: 5 })).toHaveLength(0);
+    expect(rankCandidates(loss, [fit({ lat: milesNorth(5.5) })], { radiusMiles: 10 })).toHaveLength(1);
     expect(rankCandidates(loss, [fit({ lat: milesNorth(4.8) })], { radiusMiles: 5 })).toHaveLength(1);
   });
 });
@@ -157,6 +163,10 @@ describe('searchRegionsFor', () => {
   });
   it('adds the city, ZIP first, at wider radii', () => {
     expect(searchRegionsFor(addr, 4)).toEqual(['75019', 'Coppell, TX']);
+  });
+  it('adds the full state name past five miles', () => {
+    expect(searchRegionsFor(addr, 10)).toEqual(['75019', 'Coppell, TX', 'Texas']);
+    expect(searchRegionsFor(addr, 100)).toEqual(['75019', 'Coppell, TX', 'Texas']);
   });
   it('falls back to the city when there is no ZIP, without duplicating', () => {
     expect(searchRegionsFor('205 Park Meadow Way, Coppell, TX', 2.5)).toEqual(['Coppell, TX']);

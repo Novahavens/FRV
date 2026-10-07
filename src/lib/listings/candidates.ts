@@ -1,4 +1,4 @@
-import { DEFAULT_SEARCH_RADIUS_MILES, RADIUS_BANDS, SQFT_TOLERANCE, classifyDistance, distanceMiles } from '@/lib/frv';
+import { DEFAULT_SEARCH_RADIUS_MILES, SQFT_TOLERANCE, classifyDistance, distanceMiles } from '@/lib/frv';
 import type { RadiusBand } from '@/lib/frv';
 import type { ZillowRentalRecord } from './zillow-record';
 
@@ -42,7 +42,8 @@ export interface CompCandidate {
   /** ISO date the unit is available from, when Zillow reports one. */
   availableFrom: string | null;
   distanceMiles: number;
-  band: Exclude<RadiusBand, 'beyond-limit'>;
+  /** 'extended' (5–100 mi) is shown with a red hue as a cue; 'beyond-limit' (>100 mi) is blocked by Rule 4. */
+  band: RadiusBand;
   /**
    * How closely this listing matches the loss on beds, baths, size and home
    * type: 1 is identical, 0 is the edge of eligibility. The sort key.
@@ -60,7 +61,7 @@ export interface CandidateCriteria {
   bathroomVariance: number;
   /** Square footage tolerance as a fraction. Default SQFT_TOLERANCE (15%). */
   sqftTolerance: number;
-  /** Offer nothing farther than this. Operator-chosen; default 2.5 mi, never past Rule 4's 5 mi. */
+  /** Offer nothing farther than this. Operator-chosen; default 2.5 mi, up to Rule 4's 100-mi limit. */
   radiusMiles: number;
 }
 
@@ -119,7 +120,7 @@ export function scoreLikeness(
  * Gates mirror the rules an operator would apply by hand: drop what cannot be
  * a comp (apartment communities, delisted, incomplete), keep what is
  * like-for-like (bedrooms, bathrooms, size), and keep what is inside the radius
- * the operator chose (never past Rule 4's five miles).
+ * the operator chose (past five miles they are kept, flagged extended).
  *
  * Within that eligible set: likeness first, distance as the tiebreaker. Rent is
  * deliberately not a ranking input: putting the highest rent at the top would
@@ -132,7 +133,7 @@ export function rankCandidates(
   criteria: Partial<CandidateCriteria> = {},
 ): CompCandidate[] {
   const c = { ...DEFAULT_CRITERIA, ...criteria };
-  const radius = Math.min(c.radiusMiles, RADIUS_BANDS.needsJustification);
+  const radius = c.radiusMiles;
   const seen = new Set<string>();
   const qualified: CompCandidate[] = [];
 
@@ -162,8 +163,9 @@ export function rankCandidates(
 
     const miles = distanceMiles(loss, { lat, lng });
     if (miles > radius) continue;
+    // Extended-band records are kept: the operator chose this radius and the UI
+    // marks them in red as a cue.
     const { band } = classifyDistance(miles);
-    if (band === 'beyond-limit') continue;
 
     const homeType = r.home_type ?? null;
     const exact = beds === loss.bedrooms && baths === loss.bathrooms && Math.abs(sqft - loss.sqft) / loss.sqft <= 0.05;
@@ -215,16 +217,36 @@ export function searchLocationFor(address: string): string | null {
   return null;
 }
 
+const US_STATES: Record<string, string> = {
+  AL: 'Alabama', AK: 'Alaska', AZ: 'Arizona', AR: 'Arkansas', CA: 'California', CO: 'Colorado',
+  CT: 'Connecticut', DE: 'Delaware', DC: 'District of Columbia', FL: 'Florida', GA: 'Georgia',
+  HI: 'Hawaii', ID: 'Idaho', IL: 'Illinois', IN: 'Indiana', IA: 'Iowa', KS: 'Kansas',
+  KY: 'Kentucky', LA: 'Louisiana', ME: 'Maine', MD: 'Maryland', MA: 'Massachusetts',
+  MI: 'Michigan', MN: 'Minnesota', MS: 'Mississippi', MO: 'Missouri', MT: 'Montana',
+  NE: 'Nebraska', NV: 'Nevada', NH: 'New Hampshire', NJ: 'New Jersey', NM: 'New Mexico',
+  NY: 'New York', NC: 'North Carolina', ND: 'North Dakota', OH: 'Ohio', OK: 'Oklahoma',
+  OR: 'Oregon', PA: 'Pennsylvania', RI: 'Rhode Island', SC: 'South Carolina', SD: 'South Dakota',
+  TN: 'Tennessee', TX: 'Texas', UT: 'Utah', VT: 'Vermont', VA: 'Virginia', WA: 'Washington',
+  WV: 'West Virginia', WI: 'Wisconsin', WY: 'Wyoming',
+};
+
 /**
  * Regions to query for a radius. Zillow searches by region, not radius: a ZIP
- * covers roughly 2.5 mi; wider radii add the city (ZIP first so the nearest
- * listings come from the tighter region). The radius filter does the real work.
+ * covers roughly 2.5 mi; 3-5 mi adds the city; past 5 mi adds the whole state
+ * by its full name (Zillow resolves "Texas" better than "TX"). ZIP first so the
+ * nearest listings come from the tightest region. The radius filter does the
+ * real work.
  */
 export function searchRegionsFor(address: string, radiusMiles: number): string[] {
   const zip = /\b(\d{5})(?:-\d{4})?\b/.exec(address)?.[1] ?? null;
   const parts = address.split(',').map((p) => p.trim()).filter(Boolean);
   const cityState =
     parts.length >= 2 ? parts.slice(-2).join(', ').replace(/\s+\d{5}(-\d{4})?$/, '').trim() || null : null;
-  const regions = radiusMiles <= 2.5 ? [zip ?? cityState] : [zip, cityState];
+  const stateCode = /\b([A-Za-z]{2})\s*(?:\d{5}(?:-\d{4})?)?\s*$/.exec(cityState ?? parts[parts.length - 1] ?? '')?.[1]?.toUpperCase();
+  const stateName = stateCode ? US_STATES[stateCode] ?? null : null;
+  const regions =
+    radiusMiles <= 2.5 ? [zip ?? cityState]
+    : radiusMiles <= 5 ? [zip, cityState]
+    : [zip, cityState, stateName];
   return [...new Set(regions.filter((r): r is string => !!r))];
 }

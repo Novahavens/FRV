@@ -19,7 +19,9 @@ import {
   type LossProperty,
   type MultiplierTier,
 } from '@/lib/frv';
-import { Button, Field, RuleBanner } from '@/components/ui/primitives';
+import { Button, Field, RuleBanner, Select } from '@/components/ui/primitives';
+import type { AccountManager } from '@/lib/account-managers';
+import { isAccountManager } from '@/lib/account-managers-match';
 import { AddressAutocomplete } from '@/components/forms/AddressAutocomplete';
 import { FrvSummary } from '@/components/frv/FrvSummary';
 import { RadiusPicker } from '@/components/comps/RadiusPicker';
@@ -68,7 +70,7 @@ const num = (v: string) => {
   return Number.isFinite(n) ? n : NaN;
 };
 
-export function ClaimForm() {
+export function ClaimForm({ accountManagers }: { accountManagers: AccountManager[] }) {
   const [state, formAction, pending] = useActionState<SubmitState, FormData>(submitFrv, undefined);
   const [geocoding, startGeocode] = useTransition();
 
@@ -283,7 +285,7 @@ export function ClaimForm() {
 
   const justificationMissing = needsJustification && justification.trim().length < 10;
   const canSubmit =
-    Boolean(calculation) && !blocked && !justificationMissing && preparedBy.trim().length >= 2;
+    Boolean(calculation) && !blocked && !justificationMissing && isAccountManager(preparedBy, accountManagers);
 
   const payload = JSON.stringify(
     loss && readyComps
@@ -309,7 +311,8 @@ export function ClaimForm() {
             <Field id="loss-claim-id" label="Claim identifier" value={claimIdentifier} placeholder="NH-2026-0417-A"
               onChange={(e) => setClaimIdentifier(e.target.value)}
               helper="Free text. Not always numeric." />
-            <Field id="loss-prepared-by" label="Prepared by" value={preparedBy} placeholder="Your name"
+            <Select id="loss-prepared-by" label="Prepared by" value={preparedBy} placeholder="Choose your name"
+              options={accountManagers.map((m) => ({ value: m.name, label: m.name }))}
               onChange={(e) => setPreparedBy(e.target.value)}
               helper="Goes on the audit trail with this FRV." />
           </div>
@@ -399,7 +402,7 @@ export function ClaimForm() {
               message={`Nothing within ${search.radiusMiles} miles fits the loss property.`}
               detail={nextRadius
                 ? `Widen to ${nextRadius} miles and search again.`
-                : 'Comps past five miles are blocked by Rule 4. Paste listing URLs into the comparables below by hand.'} />
+                : 'This is the widest search. Paste listing URLs by hand.'} />
           )}
 
           {!searching && search?.ok && search.candidates.length > 0 && search.candidates.length < 3 && (
@@ -407,7 +410,7 @@ export function ClaimForm() {
               message={`Only ${search.candidates.length} within ${search.radiusMiles} miles.`}
               detail={nextRadius
                 ? `You need three. Widen to ${nextRadius} miles and search again, or paste a listing URL below.`
-                : 'You need three. Comps past five miles are blocked by Rule 4, so paste listing URLs below by hand.'} />
+                : 'You need three. This is the widest search. Paste listing URLs by hand.'} />
           )}
 
           {!searching && search?.ok && search.candidates.length > 0 && (
