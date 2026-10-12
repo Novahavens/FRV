@@ -67,7 +67,7 @@ Read `docs/DECISIONS.md` before "fixing" any of these:
 
 ## Deployment notes
 
-- Vercel production has **password protection** (not Vercel SSO) so account managers without Vercel seats can use it. Automated checks need the `_vercel_jwt` cookie from a POST of `_vercel_password`.
+- Vercel production is **public**: password protection was turned off in October 2026 and there is no app login, so automated checks can hit `https://frvasap.com` directly. Anyone with the link can create and lock claims; treat auth as an open item, not a solved one.
 - `next.config.mjs` has `outputFileTracingIncludes` for the PDF route: pdfkit loads its standard fonts with a dynamic require that tracing can't see, and without it the route 500s on Vercel with `Cannot find module …/standard-fonts/Helvetica.cjs`. Keep it.
 - `@react-pdf/renderer` is in `serverExternalPackages`; `renderToBuffer(createElement(ReportDocument, …))` needs a cast to `ReactElement<DocumentProps>` under strict TS.
 - The route is `runtime = 'nodejs'`, `dynamic = 'force-dynamic'` — react-pdf needs Node, and a cached report can disagree with its record.

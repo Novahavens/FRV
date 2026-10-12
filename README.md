@@ -302,7 +302,7 @@ psql "$DATABASE_URL" -f supabase/seed.sql      # optional reference claim
 
 Vercel, Node runtime, auto-deploys from `main`. Set the two Supabase variables (and the optional keys), then point the deploy gate at **`GET /api/health`** — it checks configuration and database reachability, and returns `503` until both are sound. Environment is validated in `src/lib/env.ts`, so a missing key fails at boot, not when someone hits submit.
 
-Production sits behind Vercel **password protection** rather than Vercel SSO, so account managers without Vercel seats can use it until application auth lands.
+Production is **public**: Vercel password protection is off (October 2026), and the app has no login yet, so anyone with the link can create and lock claims. *Prepared by* is a chosen name, not an identity. Application auth is still to come; until then, keep the link inside Nova Havens.
 
 ### Production domain
 
