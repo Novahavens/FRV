@@ -23,7 +23,10 @@ export function FrvSummary({
     ['Averaged base rent', formatCents(calculation.averagedBaseRentCents)],
     [`Adjusted rent (×${calculation.multiplier.toFixed(2)})`, formatCents(calculation.averagedAdjustedRentCents)],
     ['Furniture, housewares, appliances', formatCents(calculation.furnitureCents)],
-    ['Management fee', formatCents(calculation.managementFeeCents)],
+    // Only records stored before October 2026 carry a fee.
+    ...(calculation.managementFeeCents > 0
+      ? [['Management fee', formatCents(calculation.managementFeeCents)] as [string, string]]
+      : []),
     ['Parallel 12-month figure', formatCents(calculation.twelveMonthCents)],
   ];
 

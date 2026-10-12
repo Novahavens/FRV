@@ -100,7 +100,28 @@ describe('printed reference tables', () => {
       { label: '3 bedrooms', value: '$1,456' },
       { label: '4 bedrooms', value: '$1,600' },
       { label: '5 bedrooms', value: '$1,746' },
+      { label: '6 bedrooms', value: '$1,978' },
+      { label: '7 bedrooms', value: '$2,242' },
+      { label: '8 bedrooms', value: '$2,540' },
+      { label: '9 bedrooms', value: '$2,879' },
+      { label: '10 bedrooms', value: '$3,262' },
     ]);
+  });
+
+  it('keeps the management fee row on records stored with a fee', () => {
+    expect(model.averaged.map((r) => r.label)).toContain('Monthly management fee');
+    expect(model.twelveMonth.map((r) => r.label)).toContain('Monthly management fee');
+  });
+
+  it('omits the management fee row when the claim carries none (October 2026 onward)', () => {
+    const { managementFeeCents: _retired, ...noFee } = loss;
+    const calc = calculateFrv(noFee, [comp('c1', 3_835_00, 2250), comp('c2', 3_600_00, 2100), comp('c3', 3_200_00, 1900)]);
+    const current = buildReportModel(noFee, calc);
+    expect(current.averaged.map((r) => r.label)).not.toContain('Monthly management fee');
+    expect(current.twelveMonth.map((r) => r.label)).not.toContain('Monthly management fee');
+    // Without furniture is then simply the adjusted rent.
+    const withoutFurniture = current.averaged.find((r) => r.label === 'Approximate total monthly cost without furniture');
+    expect(withoutFurniture?.value).toBe('$4,608.50');
   });
 });
 

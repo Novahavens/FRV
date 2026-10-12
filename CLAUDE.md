@@ -7,7 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 FRV calculates the **Fair Rental Value** — the monthly housing ceiling on an insurance ALE claim — for Nova Havens, a neutral third party. An account manager enters the loss property and three unfurnished Zillow comps; the tool validates the five methodology rules, computes the figure, locks it in Postgres, and renders a one-page report (web + PDF) an adjuster can approve.
 
 ```
-per comp:  (base rent × term multiplier) + furniture + management fee
+per comp:  (base rent × term multiplier) + furniture        (no management fee since Oct 2026)
 output:    mean of the three comps, selected high → low
 ```
 
@@ -28,7 +28,7 @@ npm run build                # next build — must succeed with NO env vars set
 
 Env (see `.env.example`): `NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` (a Supabase `sb_secret_…` key works here), `FIRECRAWL_API_KEY` (optional; empty = manual comp entry), `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` (optional; empty = plain loss-address input, Census geocoding on blur), `GOOGLE_MAPS_SERVER_KEY` (optional, server-only; empty = no Street View / aerial map on the report). Without Supabase configured the app renders the Coppell demo claim and `/api/health` returns 503 — that is by design, not a bug.
 
-Database: apply `supabase/migrations/*.sql` in order (`0001` init and lock triggers, `0002` pinned search_path, `0003` delete-trigger return fix, `0004` stored multiplier schedule, `0005` `account_managers`), then optionally `supabase/seed.sql`.
+Database: apply `supabase/migrations/*.sql` in order (`0001` init and lock triggers, `0002` pinned search_path, `0003` delete-trigger return fix, `0004` stored multiplier schedule, `0005` `account_managers`, `0006` bedrooms 1–10 and fee default 0), then optionally `supabase/seed.sql`.
 
 **"Prepared by" is a list.** The intake dropdown reads `account_managers (name, active, sort_order)` through `src/lib/db/account-managers.ts#listAccountManagers()` (active names only); `claims/new/actions.ts` rejects a name not on the list, so the audit trail carries one canonical name per person. Add or retire a name by editing the table, no deploy. Without Supabase the form uses `DEFAULT_ACCOUNT_MANAGERS` in `src/lib/account-managers.ts`. The table is not under the claim lock; it is reference data, not part of any claim. This is not authentication.
 
@@ -36,7 +36,7 @@ Database: apply `supabase/migrations/*.sql` in order (`0001` init and lock trigg
 
 **`src/lib/frv/` is a pure island.** No React, Next, Supabase or network imports. The browser (`ClaimForm.tsx`) and the server action (`claims/new/actions.ts`) run the *same* `calculateFrv()`; the server always recomputes on submit and that result is what gets stored. `index.ts` re-exports everything — import from `@/lib/frv`.
 
-- `constants.ts` — the methodology defaults (multiplier tiers, furniture by bedroom, 5-mile cap, 15% sqft tolerance). Changing a value needs Lou's sign-off. **Multiplier tiers are defaults, editable per claim** (Oct 2026): `LossProperty.multiplierTiers` overrides them, `calculateFrv` validates via `assertValidTiers`, the schedule used is returned on `Calculation.multiplierTiers`, stored in `calculations.multiplier_tiers` (jsonb, open-ended tier as `maxMonths: null` via `tiersToStored`/`tiersFromStored`) and printed on the report. `LEGACY_MULTIPLIER_TIERS` is the pre-Oct-2026 schedule, used to read rows stored without one.
+- `constants.ts` — the methodology defaults (multiplier tiers, furniture by bedroom 1–10, radius bands, 15% sqft tolerance). Changing a value needs Lou's sign-off. **Furniture covers 1–10 loss bedrooms** (Oct 2026): 1–5 original, 6–10 continue from 5 at the average 1→5 step ratio (≈×1.133), stored as fixed figures; `MAX_LOSS_BEDROOMS` (10) is the one cap the form stepper and the zod schema read, and migration `0006` matches it in the DB check. **The management fee is retired** (Oct 2026): `LossProperty.managementFeeCents` is optional and defaults to 0, the form has no fee field, the server stores 0, and the report prints a fee row only when the stored calculation had one (pre-change records). `LEGACY_MANAGEMENT_FEE_CENTS` ($240) documents the old figure. **Multiplier tiers are defaults, editable per claim** (Oct 2026): `LossProperty.multiplierTiers` overrides them, `calculateFrv` validates via `assertValidTiers`, the schedule used is returned on `Calculation.multiplierTiers`, stored in `calculations.multiplier_tiers` (jsonb, open-ended tier as `maxMonths: null` via `tiersToStored`/`tiersFromStored`) and printed on the report. `LEGACY_MULTIPLIER_TIERS` is the pre-Oct-2026 schedule, used to read rows stored without one.
 - `validate.ts` → `calculate.ts` — `calculateFrv` re-runs `validate()` and **throws `ValidationFailedError`** on any blocking event rather than returning a figure with a caveat.
 - `money.ts` — all money is **integer cents** (`Cents`). Dollars exist only in `parseMoneyToCents` / `formatCents`. Rounding is half-away-from-zero (matches a calculator), not banker's.
 
@@ -61,7 +61,7 @@ Read `docs/DECISIONS.md` before "fixing" any of these:
 
 ## Reference fixtures
 
-`tests/calculate.test.ts` and `tests/report.test.ts` compute the PRD reference reports **under `LEGACY_MULTIPLIER_TIERS`**: Coppell TX = $6,448.50, Camarillo CA = $10,145. They are arithmetic regressions, not methodology gates — if they move, the *engine* changed, not the schedule. Default-schedule behaviour is asserted separately (Oct 2026 defaults: 1 mo ×1.90, 2 mo ×1.80, 3 mo ×1.70, 4–11 mo ×1.60, 12+ ×1.00).
+`tests/calculate.test.ts` and `tests/report.test.ts` compute the PRD reference reports **under `LEGACY_MULTIPLIER_TIERS`**: Coppell TX = $6,448.50, Camarillo CA = $10,145, each **with the management fee its PRD report carried** ($240 and $145, passed explicitly). They are arithmetic regressions, not methodology gates — if they move, the *engine* changed, not the schedule. Default-schedule behaviour is asserted separately (Oct 2026 defaults: 1 mo ×1.90, 2 mo ×1.80, 3 mo ×1.70, 4–11 mo ×1.60, 12+ ×1.00).
 
 **Loss address autocomplete** (`src/components/forms/AddressAutocomplete.tsx`) uses Google Places only when `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` is set; otherwise it renders the plain `Field` and `actions.ts#geocode` (US Census) runs on blur. The build must pass with no key. **Comp search is Zillow-only by decision** (Furnished Finder declined — see `docs/DECISIONS.md`).
 

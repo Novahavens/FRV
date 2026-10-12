@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
+  FURNITURE_BY_BEDROOM,
+  MAX_LOSS_BEDROOMS,
   LEGACY_MULTIPLIER_TIERS,
   MULTIPLIER_TIERS,
   ValidationFailedError,
@@ -279,5 +281,53 @@ describe('sortHighToLow', () => {
     const input = [comp({ id: 'a', rentCents: 100_00, sqft: 2100 }), comp({ id: 'b', rentCents: 300_00, sqft: 2100 })];
     sortHighToLow(input);
     expect(input[0]!.id).toBe('a');
+  });
+});
+
+describe('furniture rates — bedrooms 6 to 10 (October 2026)', () => {
+  const sized = (beds: number) => [
+    comp({ id: 'c1', rentCents: 3_835_00, sqft: 2250, bedrooms: beds }),
+    comp({ id: 'c2', rentCents: 3_600_00, sqft: 2100, bedrooms: beds }),
+    comp({ id: 'c3', rentCents: 3_200_00, sqft: 1900, bedrooms: beds }),
+  ];
+
+  it('keeps the original 1–5 rates and covers every count up to ten', () => {
+    expect(MAX_LOSS_BEDROOMS).toBe(10);
+    expect(Object.keys(FURNITURE_BY_BEDROOM).map(Number)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+    expect([1, 2, 3, 4, 5].map((b) => FURNITURE_BY_BEDROOM[b])).toEqual([1_059_00, 1_267_00, 1_456_00, 1_600_00, 1_746_00]);
+  });
+
+  it('derives 6–10 from five bedrooms at the average 1→5 step ratio, to the dollar', () => {
+    const ratio = (1_746 / 1_059) ** (1 / 4);
+    for (let beds = 6; beds <= 10; beds++) {
+      expect(FURNITURE_BY_BEDROOM[beds]).toBe(Math.round(1_746 * ratio ** (beds - 5)) * 100);
+    }
+  });
+
+  it('furnishes a ten-bedroom loss at $3,262', () => {
+    const result = calculateFrv({ ...coppellLoss, bedrooms: 10 }, sized(10));
+    expect(result.furnitureCents).toBe(3_262_00);
+  });
+
+  it('has no rate past ten bedrooms and refuses rather than guessing', () => {
+    expect(() => calculateFrv({ ...coppellLoss, bedrooms: 11 }, sized(11))).toThrow(RangeError);
+  });
+});
+
+describe('management fee — retired October 2026', () => {
+  const coppellComps = [
+    comp({ id: 'c1', rentCents: 3_835_00, sqft: 2250 }),
+    comp({ id: 'c2', rentCents: 3_600_00, sqft: 2100 }),
+    comp({ id: 'c3', rentCents: 3_200_00, sqft: 1900 }),
+  ];
+
+  it('adds nothing when a claim carries no fee', () => {
+    const { managementFeeCents: _retired, ...noFee } = coppellLoss;
+    const result = calculateFrv(noFee, coppellComps);
+    expect(result.managementFeeCents).toBe(0);
+    // The Coppell reference figure without its $240 fee.
+    expect(result.averagedFrvCents).toBe(6_208_50);
+    // The 12-month reference is then the averaged base rent alone.
+    expect(result.twelveMonthCents).toBe(result.averagedBaseRentCents);
   });
 });

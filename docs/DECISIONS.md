@@ -221,3 +221,26 @@ The operator knows the market. Small-town and rural losses often have no compara
 **What this is not**
 
 Not a change to selection or arithmetic: the mean of three, high-to-low ordering and the fixtures are untouched. Not a change to locked reports: `loadLockedClaim` reads stored figures. Lou was asked in Slack before this was made and is informed of the outcome in the same thread.
+
+## Loss bedrooms to ten; management fee retired (October 2026)
+
+Fazal, 12 October 2026, with Lou's sign-off. Two methodology changes, recorded together.
+
+**Furniture covers one to ten loss bedrooms**
+
+The rate table stopped at five, so a larger loss could not be priced at all. Rates for 1–5 are unchanged. Rates for 6–10 continue from five bedrooms at the average step ratio of the original table, (1,746 / 1,059)^(1/4) ≈ 1.1332, rounded to whole dollars:
+
+| Bedrooms | 6 | 7 | 8 | 9 | 10 |
+|:--|--:|--:|--:|--:|--:|
+| Furniture / month | $1,978 | $2,242 | $2,540 | $2,879 | $3,262 |
+
+The alternative reading, repeating the 4→5 step (×1.091), was considered and not chosen. The figures are stored as fixed values in `constants.ts`, not computed at run time, so a report can never print a rate the engine did not use. `MAX_LOSS_BEDROOMS` is the cap the form and server read; migration 0006 widens the database check to match. Past ten the engine refuses rather than extrapolating.
+
+**The management fee is retired**
+
+New FRVs carry no management fee: per comp is base rent × multiplier + furniture. The form no longer asks for a fee, the server stores zero, and the database default is zero.
+
+What did not change:
+
+- Locked reports. They render from stored figures, so a report locked before this change still shows its fee row and its original total. Only new claims are affected.
+- The reference fixtures. Coppell ($6,448.50) and Camarillo ($10,145) pass the fee their PRD reports carried, so the arithmetic regression still holds. The engine still honours a fee when one is supplied; it simply is never supplied now.

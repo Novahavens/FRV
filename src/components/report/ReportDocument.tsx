@@ -81,6 +81,9 @@ const s = StyleSheet.create({
   rowValue: { fontFamily: 'Courier', flexShrink: 0 },
   rowTotalValue: { fontFamily: 'Courier-Bold', flexShrink: 0 },
   footnote: { fontSize: 6.5, color: C.inkTertiary, marginTop: 4, lineHeight: 1.4 },
+  // Long guideline tables print as two side-by-side halves so the page stays one page.
+  splitTable: { flexDirection: 'row', gap: 8 },
+  splitHalf: { flex: 1, fontSize: 7.5 },
 
   compGrid: { flexDirection: 'row', gap: 10 },
   compCard: { flex: 1, borderWidth: 1, borderColor: C.border, borderRadius: 4, padding: 7 },
@@ -113,6 +116,25 @@ function LogoImage() {
 
 function HouseImage() {
   return <Image src={publicFile('images/generic-house.png')} style={{ width: 70, height: 70 }} />;
+}
+
+/**
+ * A guideline table longer than six rows prints as two halves side by side
+ * (1–5 | 6–10 for furniture). Every row still prints; only the layout folds, so
+ * the report keeps to one page whatever the bedroom count.
+ */
+function SplitRows({ rows }: { rows: Array<{ label: string; value: string }> }) {
+  if (rows.length <= 6) return <Rows rows={rows} emphasiseLast={false} />;
+  const mid = Math.ceil(rows.length / 2);
+  return (
+    <View style={s.splitTable}>
+      {[rows.slice(0, mid), rows.slice(mid)].map((half, i) => (
+        <View key={i} style={s.splitHalf}>
+          <Rows rows={half} emphasiseLast={false} />
+        </View>
+      ))}
+    </View>
+  );
 }
 
 function Rows({ rows, emphasiseLast = true }: { rows: Array<{ label: string; value: string }>; emphasiseLast?: boolean }) {
@@ -235,7 +257,7 @@ export function ReportDocument({
           </View>
           <View style={s.col}>
             <Text style={s.h2}>Furniture and housewares pricing guideline</Text>
-            <Rows rows={model.furnitureTable} emphasiseLast={false} />
+            <SplitRows rows={model.furnitureTable} />
             <Text style={s.footnote}>{model.notes.furnitureDisclaimer}</Text>
           </View>
           <View style={s.col}>

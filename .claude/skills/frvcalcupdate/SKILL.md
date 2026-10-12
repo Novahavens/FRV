@@ -1,6 +1,6 @@
 ---
 name: frvcalcupdate
-description: Change how the FRV is calculated or how the report looks — multiplier tiers, furniture rates, management fee, comp count/rules, radius bands, and the report's headings, content blocks, logo and declarations. Use for any request like "change the 6–9 month multiplier", "make the fee $300", "allow four comps", "rename a report section", "swap the logo", or "edit the neutrality text".
+description: Change how the FRV is calculated or how the report looks — multiplier tiers, furniture rates, comp count/rules, radius bands, and the report's headings, content blocks, logo and declarations. Use for any request like "change the 6–9 month multiplier", "make the fee $300", "allow four comps", "rename a report section", "swap the logo", or "edit the neutrality text".
 ---
 
 # FRV calculation & report updates
@@ -33,19 +33,19 @@ Every change here is a **methodology or carrier-facing change**, not a code chan
 
 ## Recipe: Furniture rates
 
-**File:** `constants.ts` → `FURNITURE_BY_BEDROOM` (integer cents, keyed by **loss-property** bedroom count 1–5).
+**File:** `constants.ts` → `FURNITURE_BY_BEDROOM` (integer cents, keyed by **loss-property** bedroom count 1–10). 1–5 are the original rates; 6–10 (Oct 2026) continue from 5 at the average 1→5 step ratio and are stored as fixed figures. `MAX_LOSS_BEDROOMS` is the cap the form stepper and the zod schema read.
 
-- Adding a 6-bedroom rate: add the key here **and** widen the DB check `bedrooms between 1 and 5` in `supabase/migrations/` (new migration, don't edit 0001) **and** the zod `max(5)` in `claims/new/actions.ts`.
+- Adding an 11-bedroom rate: add the key here, raise `MAX_LOSS_BEDROOMS`, **and** widen the DB check `claims_bedrooms_check` (currently `between 1 and 10`, migration 0006) in a new migration — don't edit an applied one.
+- The PDF folds any guideline table longer than six rows into two halves (`SplitRows` in `ReportDocument.tsx`) to stay on one page. Render a PDF and check `pdfinfo` shows one page after changing the table length.
 - Report furniture table is generated (`furnitureTable`); `report.test.ts → 'prints every furniture rate'` iterates the map, so it self-updates.
 - Fixture impact: Coppell is 4-bed ($1,600).
 
-## Recipe: Management fee
+## Recipe: Management fee (retired October 2026)
 
-**File:** `constants.ts` → `DEFAULT_MANAGEMENT_FEE_CENTS` (default **$240**).
+There is no management fee on new FRVs. `LossProperty.managementFeeCents` is optional and defaults to 0; the form has no fee field; `actions.ts` stores `mgmt_fee_cents: 0`; migration 0006 sets the DB default to 0. The report and the live summary print a fee row only when the stored calculation carries a fee, so reports locked before the change still show theirs.
 
-- It is a *default*: the form pre-fills it and the operator can edit per claim, including $0. The DB default lives separately in `0001_init.sql` (`mgmt_fee_cents … default 24000`) — change both or they disagree on claims created outside the form.
-- To make the fee non-editable or add a fixed ASAP surcharge, that's a form change in `ClaimForm.tsx` (`loss-fee` field) plus a zod rule in `actions.ts`, not a constants change.
-- Fixture impact: both fixtures use $240.
+- Reinstating a fee: put a field back in `ClaimForm.tsx`, accept it in the zod schema, and store it. The engine already honours `managementFeeCents` when supplied.
+- Fixture impact: none. Coppell ($240) and Camarillo ($145) pass their PRD fees explicitly, so the reference figures still reproduce.
 
 ## Recipe: Comps — count and rules
 
