@@ -28,7 +28,7 @@ FRV = (base comp rent × term multiplier) + furniture (management fee retired Oc
 - Seed order matters: insert the claim as `draft`, attach comps + calculation, then lock. Inserting it locked first trips `comps_locked_guard`.
 - Supabase lint 0011: every plpgsql function needs `set search_path = public, pg_temp` (migration 0002).
 - PDF on Vercel: pdfkit's standard fonts are dynamically required and get dropped by output tracing → `Cannot find module …/standard-fonts/Helvetica.cjs`. Fixed with `outputFileTracingIncludes` in `next.config.mjs`; a local `next start` will NOT reproduce this, only Vercel does.
-- Production is behind Vercel **password protection** (not SSO) so account managers without Vercel seats can open it. For automated checks: `POST _vercel_password=<pw>` → 303 + `_vercel_jwt` cookie (HttpOnly) → reuse the cookie.
+- Production (`https://frvasap.com`) is **public**: Vercel password protection is off (Oct 2026) and there is no app login, so automated checks need no cookie. Anyone with the link can create and lock claims, and locked claims cannot be deleted, so never submit test claims casually.
 - Browser E2E against the deployed app: wait for React hydration before typing (type a probe value and confirm it survives ~600ms), otherwise hydration resets SSR inputs. Wait for each comp's lookup note to appear before filling its fields, or the late Firecrawl response overwrites what you typed.
 - Known UX gap: when Firecrawl reports a listing as expired, the form still fills the comp fields from it while saying it "cannot be used". Doc says expired is refused outright. Not yet reconciled.
 - Flow: branch → PR → CI (`ci.yml`, npm ci) → merge to main → Vercel deploys.
