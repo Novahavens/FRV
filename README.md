@@ -264,8 +264,8 @@ Without Supabase configured, the app renders the Coppell reference claim and say
 | `NEXT_PUBLIC_SUPABASE_URL` | Project URL |
 | `SUPABASE_SERVICE_ROLE_KEY` | Server-only. A new-style `sb_secret_…` key works here |
 | `FIRECRAWL_API_KEY` | Optional. Empty means manual comp entry |
-| `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` | Optional. Places API (New) key, HTTP-referrer restricted. Empty means a plain address field with Census geocoding |
-| `GOOGLE_MAPS_SERVER_KEY` | Optional. Server-only key for Maps Static API + Street View Static API, API-restricted (no referrer restriction). Empty means no Street View photo and no aerial map on the report |
+| `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` | Optional. Places API (New) key for the browser. Restrict by HTTP referrer to `frvasap.com`, `*.frvasap.com` and the `vercel.app` hosts. Empty means a plain address field with Census geocoding |
+| `GOOGLE_MAPS_SERVER_KEY` | Optional. Server-only key for Maps Static API + Street View Static API. Restrict by API only, not by referrer, because Vercel calls it from the server. Empty means no Street View photo and no aerial map on the report |
 
 To run against a real database:
 
@@ -289,6 +289,19 @@ psql "$DATABASE_URL" -f supabase/seed.sql      # optional reference claim
 Vercel, Node runtime, auto-deploys from `main`. Set the three variables above, then point the deploy gate at **`GET /api/health`** — it checks configuration and database reachability, and returns `503` until both are sound. Environment is validated in `src/lib/env.ts`, so a missing key fails at boot, not when someone hits submit.
 
 Production sits behind Vercel **password protection** rather than Vercel SSO, so account managers without Vercel seats can use it until application auth lands.
+
+### Production domain
+
+The app is served at **`https://frvasap.com`** (apex). `www.frvasap.com` permanently redirects (308) to the apex. The Vercel project `frv` (team `nova-havens`) holds the domain entries, and Vercel issues and renews the certificates automatically. The `vercel.app` hosts (`frv-nova-havens.vercel.app`, `frv-lilac.vercel.app`) continue to work.
+
+DNS lives at the registrar (GoDaddy, nameservers `ns33`/`ns34.domaincontrol.com`). Two records point the domain at Vercel:
+
+| Type | Name | Value |
+|:--|:--|:--|
+| A | `@` | `216.150.1.1` |
+| CNAME | `www` | `cname.vercel-dns.com` |
+
+If a domain stops resolving or shows a certificate error, check these two records first, then `GET` the domain config in Vercel. A certificate for `www` alone does not cover the apex; the apex needs its own certificate.
 
 <details>
 <summary><strong>Two things that only break on Vercel</strong></summary>
@@ -341,6 +354,9 @@ This repo is set up for [Claude Code](https://claude.ai/code):
 | ✅ | Report — web preview and PDF from one view-model, with attribution |
 | ✅ | Stored-figure reads, seed data, health check, env validation |
 | ✅ | Deployed to Vercel, verified end to end in production |
+| ✅ | Custom domain `frvasap.com` (apex) with `www` redirect and automatic HTTPS |
+| ✅ | Migration `0005_account_managers` applied to the production Supabase project |
+| ✅ | Google Maps keys set in Vercel (production and preview); Street View, aerial map and Places autocomplete enabled |
 | ◻️ | Revision flow UI |
 | ◻️ | Claim list |
 | ✅ | *Prepared by* dropdown backed by an `account_managers` table, validated server-side |
