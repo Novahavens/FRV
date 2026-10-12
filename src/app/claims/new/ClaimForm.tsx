@@ -34,6 +34,12 @@ import { geocode, lookupListing, searchComps, submitFrv, type SubmitState } from
 import styles from './ClaimForm.module.css';
 import { Stepper } from '@/components/ui/Stepper';
 
+/** Approved placement term, one to twelve months. The engine accepts longer terms; the form offers the first year. */
+const TERM_OPTIONS = Array.from({ length: 12 }, (_, i) => ({
+  value: String(i + 1),
+  label: i === 0 ? '1 month' : `${i + 1} months`,
+}));
+
 /**
  * One page. The figure updates as you type, and submit is the only state change.
  *
@@ -329,8 +335,8 @@ export function ClaimForm({ accountManagers }: { accountManagers: AccountManager
             <Stepper id="loss-baths" label="Bathrooms" value={bathrooms} onChange={setBathrooms} min={0.5} max={10} step={0.5} />
             <Field id="loss-sqft" label="Square footage" value={sqft} mono inputMode="numeric" placeholder="2,100"
               onChange={(e) => setSqft(e.target.value)} />
-            <Field id="loss-term" label="Approved term" value={termMonths} mono inputMode="numeric"
-              onChange={(e) => setTermMonths(e.target.value)} helper="Months" />
+            <Select id="loss-term" label="Approved term" value={termMonths}
+              onChange={(e) => setTermMonths(e.target.value)} options={TERM_OPTIONS} />
           </div>
 
           <Field id="loss-fee" label="Monthly management fee" value={managementFee} prefix="$" mono
