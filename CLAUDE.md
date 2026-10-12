@@ -63,7 +63,7 @@ Read `docs/DECISIONS.md` before "fixing" any of these:
 
 `tests/calculate.test.ts` and `tests/report.test.ts` compute the PRD reference reports **under `LEGACY_MULTIPLIER_TIERS`**: Coppell TX = $6,448.50, Camarillo CA = $10,145, each **with the management fee its PRD report carried** ($240 and $145, passed explicitly). They are arithmetic regressions, not methodology gates — if they move, the *engine* changed, not the schedule. Default-schedule behaviour is asserted separately (Oct 2026 defaults: 1 mo ×1.90, 2 mo ×1.80, 3 mo ×1.70, 4–11 mo ×1.60, 12+ ×1.00).
 
-**Loss address autocomplete** (`src/components/forms/AddressAutocomplete.tsx`) uses Google Places only when `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` is set; otherwise it renders the plain `Field` and `actions.ts#geocode` (US Census) runs on blur. The build must pass with no key. **Comp search is Zillow-only by decision** (Furnished Finder declined — see `docs/DECISIONS.md`).
+**Loss address autocomplete** (`src/components/forms/AddressAutocomplete.tsx`) uses Google Places only when `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` is set; otherwise it renders the plain `Field` and `actions.ts#geocode` (US Census) runs on blur. The build must pass with no key. The script is loaded by `places-loader.ts`, which resolves on the Maps `callback` parameter, **not** the script's `onload`: with `loading=async`, `onload` fires before `google.maps.importLibrary` exists (that was the Oct 2026 "no suggestions" bug; `tests/places-loader.test.ts` pins it). **Comp search is Zillow-only by decision** (Furnished Finder declined — see `docs/DECISIONS.md`).
 
 ## Deployment notes
 
