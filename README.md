@@ -236,6 +236,8 @@ The key is server-only: the web report loads the images through `/api/claims/:id
 
 The loss address field offers **Google Places autocomplete** when `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` is set: suggestions appear as the account manager types (US addresses only), and picking one fills the address and its coordinates in one step. Without the key the field is a plain input and coordinates are looked up through the US Census geocoder when the field loses focus — exactly as before. Either way the coordinates are captured once at intake and stored, because Rule 4 depends on them.
 
+Bedrooms and bathrooms are set with up and down arrows rather than typed. Bedrooms move one at a time (1–5 for the loss, 1–10 for comps); bathrooms move in half steps (0.5–10). A value imported from a listing snaps to the nearest step in the direction pressed, so a 1.75-bath listing reads as 1.5 or 2 rather than being stuck between steps. The arrow keys work when the value has focus.
+
 <br>
 
 ## The report
