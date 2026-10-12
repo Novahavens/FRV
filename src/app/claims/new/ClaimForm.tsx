@@ -18,6 +18,7 @@ import {
   type Comp,
   type LossProperty,
   type MultiplierTier,
+  MAX_LOSS_BEDROOMS,
 } from '@/lib/frv';
 import { Button, Field, RuleBanner, Select } from '@/components/ui/primitives';
 import type { AccountManager } from '@/lib/account-managers';
@@ -90,7 +91,6 @@ export function ClaimForm({ accountManagers }: { accountManagers: AccountManager
   const [bathrooms, setBathrooms] = useState('2');
   const [sqft, setSqft] = useState('');
   const [termMonths, setTermMonths] = useState('3');
-  const [managementFee, setManagementFee] = useState('240');
   const [justification, setJustification] = useState('');
 
   /**
@@ -204,20 +204,18 @@ export function ClaimForm({ accountManagers }: { accountManagers: AccountManager
 
 
   const loss: LossProperty | null = useMemo(() => {
-    const parsedFee = parseMoneyToCents(managementFee);
-    if (!address || !lat || !lng || !sqft || parsedFee == null || !tiers) return null;
+    if (!address || !lat || !lng || !sqft || !tiers) return null;
     const draft = {
       claimIdentifier: claimIdentifier || 'Untitled claim',
       address,
       lat: num(lat), lng: num(lng),
       bedrooms: num(bedrooms), bathrooms: num(bathrooms),
       sqft: num(sqft), termMonths: num(termMonths),
-      managementFeeCents: parsedFee,
     };
     return Object.values(draft).some((v) => typeof v === 'number' && Number.isNaN(v))
       ? null
       : { ...draft, multiplierTiers: tiers };
-  }, [claimIdentifier, address, lat, lng, bedrooms, bathrooms, sqft, termMonths, managementFee, tiers]);
+  }, [claimIdentifier, address, lat, lng, bedrooms, bathrooms, sqft, termMonths, tiers]);
 
   /**
    * Find comps near the loss.
@@ -331,17 +329,13 @@ export function ClaimForm({ accountManagers }: { accountManagers: AccountManager
             helper={lat && lng ? `Located at ${Number(lat).toFixed(4)}, ${Number(lng).toFixed(4)}` : 'Coordinates are looked up when you leave this field.'} />
 
           <div className={styles.quad}>
-            <Stepper id="loss-beds" label="Bedrooms" value={bedrooms} onChange={setBedrooms} min={1} max={5} step={1} />
+            <Stepper id="loss-beds" label="Bedrooms" value={bedrooms} onChange={setBedrooms} min={1} max={MAX_LOSS_BEDROOMS} step={1} />
             <Stepper id="loss-baths" label="Bathrooms" value={bathrooms} onChange={setBathrooms} min={0.5} max={10} step={0.5} />
             <Field id="loss-sqft" label="Square footage" value={sqft} mono inputMode="numeric" placeholder="2,100"
               onChange={(e) => setSqft(e.target.value)} />
             <Select id="loss-term" label="Approved term" value={termMonths}
               onChange={(e) => setTermMonths(e.target.value)} options={TERM_OPTIONS} />
           </div>
-
-          <Field id="loss-fee" label="Monthly management fee" value={managementFee} prefix="$" mono
-            onChange={(e) => setManagementFee(e.target.value)}
-            helper="Default $240. Zero is permitted on standard sourcing." />
         </section>
 
         <section className={styles.card} aria-labelledby="multipliers-title">

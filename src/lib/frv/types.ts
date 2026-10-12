@@ -39,8 +39,12 @@ export interface LossProperty {
   bathrooms: number;
   sqft: number;
   termMonths: LeaseTermMonths;
-  /** Default 240_00. Zero is permitted — standard non-ASAP sourcing carries no fee. */
-  managementFeeCents: Cents;
+  /**
+   * Retired October 2026: new FRVs carry no management fee, and the intake form
+   * no longer asks for one. Omitted means zero. Kept so the PRD reference reports
+   * (which included $240) and calculations stored before the change reproduce.
+   */
+  managementFeeCents?: Cents;
   /**
    * The multiplier schedule for this claim. Omitted means the defaults in
    * constants.ts. Whatever is used is stored with the calculation and printed

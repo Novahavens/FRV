@@ -2,7 +2,15 @@
 
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
-import { SEARCH_RADIUS_STEPS, calculateFrv, tiersFromStored, tiersToStored, type Comp, type LossProperty } from '@/lib/frv';
+import {
+  MAX_LOSS_BEDROOMS,
+  SEARCH_RADIUS_STEPS,
+  calculateFrv,
+  tiersFromStored,
+  tiersToStored,
+  type Comp,
+  type LossProperty,
+} from '@/lib/frv';
 import { db } from '@/lib/db/client';
 import { isConfigured } from '@/lib/env';
 import { listAccountManagers } from '@/lib/db/account-managers';
@@ -34,11 +42,10 @@ const payloadSchema = z.object({
   address: z.string().min(3, 'Loss address is required.'),
   lat: z.number(),
   lng: z.number(),
-  bedrooms: z.number().int().min(1).max(5),
+  bedrooms: z.number().int().min(1).max(MAX_LOSS_BEDROOMS),
   bathrooms: z.number().min(0.5).max(10),
   sqft: z.number().int().positive(),
   termMonths: z.number().int().min(1).max(60),
-  managementFeeCents: z.number().int().min(0),
   preparedBy: z.string().min(2, 'Your name goes on the audit trail.'),
   justification: z.string().optional(),
   /** The multiplier schedule, if the operator changed it from the defaults. */
@@ -107,7 +114,7 @@ export async function submitFrv(_prev: SubmitState, formData: FormData): Promise
       bathrooms: loss.bathrooms,
       sqft: loss.sqft,
       term_months: loss.termMonths,
-      mgmt_fee_cents: loss.managementFeeCents,
+      mgmt_fee_cents: 0, // Management fee retired October 2026.
       status: 'draft',
       created_by: preparedBy,
     })

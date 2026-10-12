@@ -120,8 +120,12 @@ export function buildReportModel(
   const { comps, multiplier, furnitureCents, managementFeeCents } = calculation;
   const termLabel = `${loss.termMonths} ${loss.termMonths === 1 ? 'month' : 'months'}`;
 
-  /** Alacrity prints both totals. Without furniture is adjusted rent + fee. */
+  /** Alacrity prints both totals. Without furniture is adjusted rent (+ fee on pre-October-2026 records). */
   const withoutFurniture = (adjusted: Cents) => adjusted + managementFeeCents;
+  /** The fee row appears only on records stored with a fee; new FRVs carry none. */
+  const feeRow = managementFeeCents > 0
+    ? [{ label: 'Monthly management fee', value: formatCents(managementFeeCents) }]
+    : [];
 
   return {
     claimIdentifier: loss.claimIdentifier,
@@ -151,7 +155,7 @@ export function buildReportModel(
       { label: `Short-term multiplier, ${termLabel}`, value: `× ${multiplier.toFixed(2)}` },
       { label: 'Adjusted rent', value: formatCents(calculation.averagedAdjustedRentCents) },
       { label: 'Approximate furniture/housewares/appliances price', value: formatCents(furnitureCents) },
-      { label: 'Monthly management fee', value: formatCents(managementFeeCents) },
+      ...feeRow,
       {
         label: 'Approximate total monthly cost without furniture',
         value: formatCents(withoutFurniture(calculation.averagedAdjustedRentCents)),
@@ -183,7 +187,7 @@ export function buildReportModel(
 
     twelveMonth: [
       { label: 'Approximate rent for the property', value: formatCents(calculation.averagedBaseRentCents) },
-      { label: 'Monthly management fee', value: formatCents(managementFeeCents) },
+      ...feeRow,
       {
         label: 'Approximate total monthly cost without furniture',
         value: formatCents(calculation.twelveMonthCents),

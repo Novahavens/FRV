@@ -13,8 +13,8 @@
 
 <p>
   <a href="https://github.com/Novahavens/FRV/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/Novahavens/FRV/actions/workflows/ci.yml/badge.svg"></a>
-  <img alt="Deployed on Vercel" src="https://img.shields.io/badge/Vercel-production-000000?style=flat-square&logo=vercel&logoColor=white">
-  <img alt="Tests" src="https://img.shields.io/badge/tests-55%20passing-05803b?style=flat-square&logo=vitest&logoColor=white">
+  <a href="https://frvasap.com"><img alt="Live at frvasap.com" src="https://img.shields.io/badge/live-frvasap.com-000000?style=flat-square&logo=vercel&logoColor=white"></a>
+  <img alt="Tests" src="https://img.shields.io/badge/tests-118%20passing-05803b?style=flat-square&logo=vitest&logoColor=white">
   <img alt="Next.js 15" src="https://img.shields.io/badge/Next.js-15-0a0a0a?style=flat-square&logo=nextdotjs">
   <img alt="React 19" src="https://img.shields.io/badge/React-19-20232a?style=flat-square&logo=react&logoColor=61dafb">
   <img alt="TypeScript strict" src="https://img.shields.io/badge/TypeScript-strict-276ef1?style=flat-square&logo=typescript&logoColor=white">
@@ -23,13 +23,14 @@
 
 <p>
   <a href="#the-number">The number</a> ·
-  <a href="#see-it">See it</a> ·
+  <a href="#intake">Intake</a> ·
   <a href="#how-a-claim-moves">How a claim moves</a> ·
   <a href="#the-five-rules">The five rules</a> ·
+  <a href="#finding-comparables">Finding comparables</a> ·
+  <a href="#the-report">The report</a> ·
   <a href="#architecture">Architecture</a> ·
   <a href="#quick-start">Quick start</a> ·
-  <a href="#deploying">Deploying</a> ·
-  <a href="#working-with-claude-code">Claude Code</a>
+  <a href="#deploying">Deploying</a>
 </p>
 
 </div>
@@ -38,19 +39,20 @@
 
 When a home becomes uninhabitable, a policy's Additional Living Expenses coverage pays for somewhere else to live. The **Fair Rental Value** is the monthly ceiling on that spend. Carriers don't calculate it themselves — setting a number you have a financial interest in keeping low is a lawsuit — so they hand it to a neutral third party.
 
-That third party is Nova Havens. **This is the tool that produces the number.**
+That third party is Nova Havens. **This is the tool that produces the number.** It runs at **[frvasap.com](https://frvasap.com)**.
 
-An account manager enters the loss property, pastes three Zillow listings, and receives a single-page report an adjuster can approve without picking up the phone. Every rule in the methodology is enforced by the software, the arithmetic is reproducible to the cent from stored data alone, and once the figure locks, **the database itself refuses to let it move.**
+An account manager enters the loss property, chooses three unfurnished Zillow comparables, and receives a single-page report an adjuster can approve without picking up the phone. Every rule in the methodology is enforced by the software, the arithmetic is reproducible to the cent from stored data alone, and once the figure locks, **the database itself refuses to let it move.**
 
 <br>
 
 ## The number
 
 ```
-FRV  =  (base comp rent × short-term multiplier)  +  furniture  +  management fee
+per comp  =  (base comp rent × short-term multiplier)  +  furniture
+FRV       =  the average of the three comps, sorted high to low
 ```
 
-Applied to each of three unfurnished comparables, sorted high to low, then **averaged**.
+There is **no management fee**. It was retired in October 2026 with Lou's sign-off. Reports locked before then keep the fee they were calculated with and still print it.
 
 <table>
 <tr><td valign="top">
@@ -63,17 +65,24 @@ Applied to each of three unfurnished comparables, sorted high to low, then **ave
 | 4 – 11 months | × 1.60 |
 | 12+ months | × 1.00 |
 
-<sub>Defaults. Every tier, including 12+ months, is editable per claim; the schedule used is stored and printed.</sub>
+<sub>Defaults, approved by Lou in October 2026. Every tier is editable per claim; the schedule used is stored and printed.</sub>
 
 </td><td valign="top">
 
-| Bedrooms | Furniture / month |
+| Loss bedrooms | Furniture / month |
 |:--|--:|
 | 1 | $1,059 |
 | 2 | $1,267 |
 | 3 | $1,456 |
 | 4 | $1,600 |
 | 5 | $1,746 |
+| 6 | $1,978 |
+| 7 | $2,242 |
+| 8 | $2,540 |
+| 9 | $2,879 |
+| 10 | $3,262 |
+
+<sub>1–5 are the original rates. 6–10 (October 2026) continue from 5 at the average 1→5 step ratio, ≈ ×1.133, rounded to the dollar.</sub>
 
 </td><td valign="top">
 
@@ -82,16 +91,16 @@ Applied to each of three unfurnished comparables, sorted high to low, then **ave
 | Coppell, TX · 3 comps · 3 mo | **$6,448.50** |
 | Camarillo, CA · 2 mo | **$10,145** |
 
-Under the original schedule, as the PRD reports were.<br>Kept as arithmetic regressions.
+<sub>Computed under the original multiplier schedule and with the management fee the PRD reports carried. Kept as arithmetic regressions: if they move, the engine changed.</sub>
 
 </td></tr>
 </table>
 
-Management fee defaults to **$240**, is editable per claim, and accepts zero. Multipliers are editable per claim too: the intake form shows the five tiers as percentages, pre-filled with the defaults above (approved by Lou, October 2026: 90 / 80 / 70 / 60 / 0). Whatever is entered is recomputed on the server, stored with the calculation and printed on the report, so the workings an adjuster checks always match the figure.
+Furniture follows the **loss** property's bedroom count, never the comp's, and does not scale with term. The figure is recomputed on the server at submit, stored with the calculation, and printed on the report, so the workings an adjuster checks always match it.
 
 <br>
 
-## See it
+## Intake
 
 <table>
 <tr>
@@ -103,10 +112,19 @@ Management fee defaults to **$240**, is editable per claim, and accepts zero. Mu
 <td width="50%" valign="top"><img alt="Final FRV report for the Coppell reference claim" src="docs/assets/report-preview.png"></td>
 </tr>
 <tr>
-<td><sub>The figure updates as you type. Submit is the only state change. <em>Prepared by</em> is a dropdown of account managers, not free text.</sub></td>
+<td><sub>The figure updates as you type. Submit is the only state change.</sub></td>
 <td><sub>Section order follows the Alacrity format adjusters already read. The PDF is the same model, rendered server-side.</sub></td>
 </tr>
 </table>
+
+One page, top to bottom:
+
+- **Prepared by** is a dropdown of account managers, read from the `account_managers` table. The server rejects a name not on the list, so the audit trail carries one spelling per person.
+- **Loss address** offers Google Places suggestions when `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` is set; picking one fills the address and coordinates together. Without the key it is a plain field, and the US Census geocoder looks the coordinates up when the field loses focus. Coordinates are captured once and stored, because Rule 4 depends on them.
+- **Bedrooms and bathrooms** are steppers with up and down arrows, not typed. Loss bedrooms run 1–10, one per furniture rate; comp bedrooms 1–10; bathrooms 0.5–10 in half steps. A listing value between steps, such as 1.75 baths, snaps to the next step in the direction pressed.
+- **Approved term** is a dropdown of 1 to 12 months, defaulting to 3. The engine accepts longer terms; the form offers the first year.
+- **Short-term multipliers** show the five tiers as editable percentages, pre-filled with the defaults.
+- **Three comparables**, filled by pasting a Zillow URL or picked from *Find comparables*. Every field stays editable, and the audit trail records what a person changed.
 
 <br>
 
@@ -114,7 +132,7 @@ Management fee defaults to **$240**, is editable per claim, and accepts zero. Mu
 
 ```mermaid
 flowchart LR
-    A[Loss property<br/><sub>address · beds · baths · sqft · term</sub>] --> B[Three comps<br/><sub>paste Zillow URLs</sub>]
+    A[Loss property<br/><sub>address · beds · baths · sqft · term</sub>] --> B[Three comps<br/><sub>paste Zillow URLs or find</sub>]
     B --> V{Validate}
     V -- furnished, or past 100 miles --> X[Blocked<br/><sub>replace the comp</sub>]
     V -- 2 to 5 miles, size or bedroom drift --> J[Justify in writing]
@@ -141,10 +159,43 @@ These lived in a reference guide as advice for people. Here they are system beha
 | **1** | Unfurnished comps only | Furnished flag and listing-text keyword scan in the engine, plus a `check` constraint so a furnished comp cannot even be stored | Rejected. No override exists, at any permission level. |
 | **2** | FRV before sourcing | `sourcing_unlocked` is set only by the lock transition | Sourcing stays closed |
 | **3** | Sort high to low | `sort_position` persisted with the record, never recomputed at render | Re-sorted; entry order kept in the audit trail |
-| **4** | Geography over everything | Haversine bands from coordinates captured at intake: <1 mi, 1–2 mi, 2–5 mi needs justification, 5–100 mi permitted and noted (red cue), >100 mi halts | Past one hundred miles the calculation stops rather than widening |
+| **4** | Geography over everything | Haversine bands from coordinates captured at intake: under 1 mi and 1–2 mi pass, 2–5 mi needs a written justification, 5–100 mi is permitted and noted, past 100 mi halts | Past one hundred miles the calculation stops rather than widening |
 | **5** | Locked once set | Postgres triggers on `claims`, `comps` and `calculations`; `open_revision()` is the only way through | A new immutable version plus a reason-coded revision record |
 
-Bedroom count is enforced. **Bathroom count deliberately is not** — a 4-bed/2.5-bath comp was correctly used for a 3-bed/3-bath loss because square footage and location mattered more. See [the decision log](docs/DECISIONS.md#bathrooms-are-not-matched).
+Bedroom count is checked: a comp with a different count is flagged for acknowledgement. **Bathroom count deliberately is not** — a 4-bed/2.5-bath comp was correctly used for a 3-bed/3-bath loss because square footage and location mattered more. See [the decision log](docs/DECISIONS.md#bathrooms-are-not-matched).
+
+<br>
+
+## Finding comparables
+
+Listing data comes through **Firecrawl's catalogued Zillow capabilities**, approved by Will and Lou in October 2026. Zillow has offered no public API since September 2021, and its partner programme requires MLS membership.
+
+**Paste a URL** (`properties/rental`) and the comp fills itself: rent, bedrooms, bathrooms, square footage, coordinates. Expired listings are refused, because a comp no longer for rent is not evidence.
+
+**Find comparables** (`properties/rental_search`) returns a shortlist the account manager picks from. It never picks for them, and it never writes to a claim.
+
+- **Eligible:** active rentals within ±1 bedroom, ±1 bathroom and ±15% square footage of the loss. Apartment communities are excluded.
+- **Unfurnished only.** Zillow's search can restrict *to* furnished but not away from it, so each search also pulls the furnished listings and subtracts them, at one extra Firecrawl call per region. Rule 1's full-text check on pick is still the final gate.
+- **Radius is the operator's choice:** 2.5 miles by default, with a picker for 2.5 / 3 / 4 / 5 / 10 / 25 / 50 / 100 miles. Nothing widens automatically; thin results suggest the next step.
+- **Coverage thins as the radius grows.** Zillow searches by region, not radius: 2.5 miles searches the ZIP, 3–5 miles adds the city, and past 5 miles adds the state. Distance is then filtered by Haversine. A 100-mile search is the widest the tool can run, not an exhaustive one.
+- **Order:** most like the loss first (bedrooms, bathrooms, size, single-family), nearest as the tiebreaker, never rent. Cards read "Exact match" or "Close match".
+- **Past 5 miles** a card shows a light red hue and a "Past 5 mi" chip as a cue. Rule 4 permits it up to 100 miles, and the distance prints on the report.
+- **Filter results** by home type, pets, available-by date, exact beds or exact baths, from facts the search already returns. Amenities such as garage or pool are not in those records and are not fetched.
+
+Picking a candidate runs the same single-listing lookup as a pasted URL, so every rule still applies. Records carry Zillow's attribution, and any report built from them prints it. Without `FIRECRAWL_API_KEY` the form works identically with manual entry, and a licensed provider can replace Firecrawl by implementing `ListingProvider`.
+
+**Zillow is the only source, on purpose.** Furnished Finder was considered and declined: its inventory is furnished by definition, which Rule 1 rejects. See [the decision log](docs/DECISIONS.md#comp-search-stays-zillow-only-furnished-finder-declined-october-2026).
+
+<br>
+
+## The report
+
+Section structure follows the Alacrity format carriers already receive — Loss Address Details, FRV Address Details, comparables, 12-month FRV Details, guideline tables, neutrality declaration — so an adjuster finds every number where they always have. Underneath, it is Nova Havens' methodology: three comps averaged where Alacrity carries one.
+
+- **Reports render from stored figures.** The engine is never consulted at render time, so a methodology change cannot restate a report an adjuster has already accepted. That is why a report locked before October 2026 still shows its management fee row, and a new one has none.
+- **Guideline tables are generated from the constants the engine reads**, so the workings can never disagree with the figure. The PDF prints the ten-row furniture table in two halves, 1–5 beside 6–10, to stay on one page.
+- **Imagery.** When `GOOGLE_MAPS_SERVER_KEY` is set, the report carries a Street View photo of the loss address and a hybrid aerial map with the loss as a red "L" pin and the comps as pins 1–3. The key stays server-side: the web report loads images through `/api/claims/:id/street-view` and `/api/claims/:id/map`. Without the key the report shows a house placeholder and no map.
+- `GET /api/claims/:id/report` returns the PDF. It renders only for locked claims, from stored figures, and is never cached.
 
 <br>
 
@@ -160,6 +211,7 @@ flowchart TB
         A --> DB[(Supabase Postgres)]
         R[Report route] -->|stored figures only| DB
         R --> PDF[react-pdf]
+        R --> GM[Google Static Maps · optional]
     end
     F -- submit --> A
     FC[Firecrawl · Zillow] -. fills fields .-> F
@@ -176,77 +228,37 @@ flowchart TB
 src/
 ├── lib/
 │   ├── frv/            Pure calculation core. No I/O, no framework, no network.
-│   │   ├── constants.ts    The locked methodology — changing a value here needs Lou
+│   │   ├── constants.ts    The methodology: multipliers, furniture 1–10, radius bands. Changes need Lou
 │   │   ├── money.ts        Integer-cent arithmetic and formatting
 │   │   ├── geo.ts          Haversine distance and radius bands
-│   │   ├── multiplier.ts   Term tiers and furniture rates
+│   │   ├── multiplier.ts   Term tiers and furniture lookup
 │   │   ├── validate.ts     The rules as executable checks
-│   │   ├── calculate.ts    Selection (high-to-low) and output (three-comp average)
-│   │   └── listing-url.ts  Zillow URL → street address
-│   ├── listings/       Listing metadata providers, behind one interface
+│   │   └── calculate.ts    Selection (high-to-low) and output (three-comp average)
+│   ├── listings/       Zillow lookup and search behind ListingProvider; pure ranking and filters
+│   ├── maps/           Street View and Static Maps URLs and fetches (server-only key)
 │   ├── report/         Report view-model and verbatim declarations
 │   ├── db/             Supabase access — the only layer that knows about storage
 │   └── env.ts          Environment, validated once
-├── components/         UI bound to design tokens. No hardcoded colour anywhere.
+├── components/         UI bound to design tokens, including the Stepper control
 └── app/
     ├── claims/new/     Intake: one page, live figure, server actions
     ├── report/         On-screen report
-    └── api/            PDF rendering, health check
+    └── api/            PDF, report imagery, health check
 
 supabase/   Schema, lock triggers, open_revision(), seed
-tests/      Acceptance fixtures against the PRD reference reports
+tests/      Reference fixtures and unit tests
 docs/       Decision log, assets
 ```
 
 Four ideas carry the whole design.
 
-> **The core is a pure island.** Nothing from React, Next or Supabase reaches into `lib/frv`. That is what makes the fixtures meaningful, and it is why the browser can run the exact code the server runs — the live preview isn't an approximation of the answer, it *is* the answer. The server recomputes on submit regardless; a figure that reaches an adjuster must not have been produced on a machine we don't control.
+> **The core is a pure island.** Nothing from React, Next or Supabase reaches into `lib/frv`. That is what makes the fixtures meaningful, and it is why the browser can run the exact code the server runs — the live preview isn't an approximation of the answer, it *is* the answer. The server recomputes on submit regardless.
 
 > **Money is integer cents.** Dollars exist only at parse and format. A multiply-then-average chain in floating point accumulates error, and this number is the ceiling on someone's housing for months.
 
 > **The lock is a database trigger, not a hidden button.** Hiding a control is a suggestion; a rejected write is a guarantee. It holds against the app, a script, and the Supabase dashboard alike.
 
-> **Reports render from stored figures.** `loadLockedClaim()` reads the `calculations` row and never consults the engine, so a future change to the arithmetic cannot restate a report an adjuster has already accepted. One view-model feeds both the web preview and the PDF; layout may differ between them, content cannot.
-
-<br>
-
-## Listing data
-
-Paste a Zillow listing URL and the comp fills itself: rent, bedrooms, bathrooms, square footage, coordinates.
-
-This runs through **Firecrawl's catalogued Zillow capability**, approved by Will and Lou in October 2026. Its scope is deliberately narrow:
-
-- **`properties/rental`** — metadata for the one listing the account manager chose.
-- **`properties/rental_search`** — *Find comparables*: a shortlist of active rentals near the loss that fit it (bedrooms ±1, bathrooms ±1, size ±15%, no apartment communities). The operator chooses the radius: 2.5 miles by default, with a picker for 2.5 / 3 / 4 / 5 / 10 / 25 / 50 / 100 miles. Nothing widens automatically. **Results are unfurnished homes only.** Zillow's search can restrict *to* furnished but not away from it, so each search also pulls one `furnished=true` page per region and subtracts those listings before ranking (one extra Firecrawl call per region); Rule 1's full-text check on pick remains the final gate. Zillow's search is region-based, so 2.5 miles searches the ZIP and 3–5 miles adds the city (more pages, more Firecrawl credits, slower); past 5 miles it adds the state too (ZIP + city + state, 4 pages per region, 10 in all). Distance is then filtered by Haversine. Zillow has no radius search, so **coverage thins as the radius grows**: a 100-mile search is the widest the tool can run, not an exhaustive one. Candidates past 5 miles show a light red hue and a "Past 5 mi" chip as a cue; since October 2026 Rule 4 permits them up to 100 miles without justification, and the distance is printed on the report. Past 100 miles the engine still halts. Among eligible listings the most like the loss comes first (bedrooms, bathrooms, size, single-family), nearest as the tiebreaker, and never rent. Cards read "Exact match" or "Close match". A searching panel shows progress and locks the controls; thin or empty results suggest the next radius (5 → 10 → 25 → 50 → 100; at 100 the copy says it is the widest search) and then pasting URLs by hand. *Filter results* (home type, pets, available-by date, exact beds, exact baths) narrows the list instantly from facts the search already returns; amenities such as garage or pool are not in those records and are not fetched. The account manager picks; picking runs the single-listing lookup so every rule still applies. Comp selection stays human because geography is where FRVs go wrong, and no tool reliably tells one side of a boundary road from the other.
-- **Every field stays editable**, and the audit trail records which ones the operator changed. The lookup saves typing; it is never the source of truth.
-- **Expired listings are refused.** A comp that is no longer for rent is not evidence.
-- **The data remains Zillow's.** Records carry an attribution string, and any report built from them prints it.
-
-Zillow itself has offered no public API since September 2021, and its partner programme requires MLS membership. Lookup runs when `FIRECRAWL_API_KEY` is set; without it the form works identically with manual entry. A licensed provider can replace Firecrawl by implementing `ListingProvider` without touching the form, the engine or the report.
-
-**Zillow is the only search source, on purpose.** A second concurrent source was considered in October 2026 — Furnished Finder specifically. It was declined: Furnished Finder's inventory is furnished by definition, which Rule 1 rejects outright, and Firecrawl's catalogue has no provider for it. The other catalogued rental searches (Redfin, Craigslist) do not return the coordinates and square footage the shortlist filter needs. See [the decision log](docs/DECISIONS.md#comp-search-stays-zillow-only-furnished-finder-declined-october-2026).
-
-## Report imagery
-
-When `GOOGLE_MAPS_SERVER_KEY` is set, the report shows a **Street View snapshot** of the loss address in the loss-card photo slot and a **hybrid aerial map** beside the headline figure — the loss address as a red "L" pin, the three comparables as pins 1–3 in their persisted order. Both appear on the web report and in the PDF, which stays one page.
-
-The key is server-only: the web report loads the images through `/api/claims/:id/street-view` and `/api/claims/:id/map`, and the PDF route fetches the bytes directly, so the key never reaches a browser. Imagery is fetched when the report renders, not stored — coordinates are already persisted, so the pins cannot move. Without the key, or where Street View has no coverage, the report renders as before (house placeholder, no map). This is static imagery on the finished report, not a map on the intake form; see [the decision log](docs/DECISIONS.md#the-report-carries-imagery-street-view-and-an-aerial-map-october-2026).
-
-## Loss address
-
-The loss address field offers **Google Places autocomplete** when `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` is set: suggestions appear as the account manager types (US addresses only), and picking one fills the address and its coordinates in one step. Without the key the field is a plain input and coordinates are looked up through the US Census geocoder when the field loses focus — exactly as before. Either way the coordinates are captured once at intake and stored, because Rule 4 depends on them.
-
-Bedrooms and bathrooms are set with up and down arrows rather than typed. Bedrooms move one at a time (1–5 for the loss, 1–10 for comps); bathrooms move in half steps (0.5–10). A value imported from a listing snaps to the nearest step in the direction pressed, so a 1.75-bath listing reads as 1.5 or 2 rather than being stuck between steps. The arrow keys work when the value has focus. The approved term is a dropdown of one to twelve months, defaulting to three.
-
-<br>
-
-## The report
-
-Section structure follows the Alacrity format carriers already receive — Loss Address Details, FRV Address Details, 12-month FRV Details, guideline tables, neutrality declaration — so an adjuster finds every number where they always have. Underneath, it's Nova Havens' methodology: three comps averaged where Alacrity carries one, with both of their totals preserved and a test asserting they reconcile.
-
-The guideline tables on the page are generated from the same constants the engine reads. The workings an adjuster checks can never disagree with the arithmetic that produced the figure above them.
-
-`GET /api/claims/:id/report` returns the PDF. It renders only for locked claims, from stored figures, and is never cached.
+> **Reports render from stored figures.** One view-model feeds both the web preview and the PDF; layout may differ between them, content cannot.
 
 <br>
 
@@ -267,7 +279,7 @@ Without Supabase configured, the app renders the Coppell reference claim and say
 | `SUPABASE_SERVICE_ROLE_KEY` | Server-only. A new-style `sb_secret_…` key works here |
 | `FIRECRAWL_API_KEY` | Optional. Empty means manual comp entry |
 | `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` | Optional. Places API (New) key for the browser. Restrict by HTTP referrer to `frvasap.com`, `*.frvasap.com` and the `vercel.app` hosts. Empty means a plain address field with Census geocoding |
-| `GOOGLE_MAPS_SERVER_KEY` | Optional. Server-only key for Maps Static API + Street View Static API. Restrict by API only, not by referrer, because Vercel calls it from the server. Empty means no Street View photo and no aerial map on the report |
+| `GOOGLE_MAPS_SERVER_KEY` | Optional. Server-only key for Maps Static API and Street View Static API. Restrict by API only, not by referrer, because Vercel calls it from the server. Empty means no Street View photo and no aerial map |
 
 To run against a real database:
 
@@ -279,38 +291,38 @@ psql "$DATABASE_URL" -f supabase/seed.sql      # optional reference claim
 | Command | Does |
 |:--|:--|
 | `npm run dev` | Local server at `localhost:3000` |
-| `npm test` | Acceptance fixtures and unit tests |
+| `npm test` | Reference fixtures and unit tests |
 | `npx vitest run -t "Coppell"` | Just the tests matching a name |
 | `npm run typecheck` | Strict TypeScript, `noUncheckedIndexedAccess` on |
-| `npm run verify` | Typecheck, test and production build — the pre-push gate |
+| `npm run verify` | Typecheck, test and production build — the pre-push gate. The build must pass with no variables set |
 
 <br>
 
 ## Deploying
 
-Vercel, Node runtime, auto-deploys from `main`. Set the three variables above, then point the deploy gate at **`GET /api/health`** — it checks configuration and database reachability, and returns `503` until both are sound. Environment is validated in `src/lib/env.ts`, so a missing key fails at boot, not when someone hits submit.
+Vercel, Node runtime, auto-deploys from `main`. Set the two Supabase variables (and the optional keys), then point the deploy gate at **`GET /api/health`** — it checks configuration and database reachability, and returns `503` until both are sound. Environment is validated in `src/lib/env.ts`, so a missing key fails at boot, not when someone hits submit.
 
 Production sits behind Vercel **password protection** rather than Vercel SSO, so account managers without Vercel seats can use it until application auth lands.
 
 ### Production domain
 
-The app is served at **`https://frvasap.com`** (apex). `www.frvasap.com` permanently redirects (308) to the apex. The Vercel project `frv` (team `nova-havens`) holds the domain entries, and Vercel issues and renews the certificates automatically. The `vercel.app` hosts (`frv-nova-havens.vercel.app`, `frv-lilac.vercel.app`) continue to work.
+The app is served at **`https://frvasap.com`**. `www.frvasap.com` permanently redirects (308) to it. The Vercel project `frv` (team `nova-havens`) holds the domain entries, and Vercel issues and renews the certificates. The `vercel.app` hosts (`frv-nova-havens.vercel.app`, `frv-lilac.vercel.app`) continue to work.
 
-DNS lives at the registrar (GoDaddy, nameservers `ns33`/`ns34.domaincontrol.com`). Two records point the domain at Vercel:
+DNS lives at the registrar (GoDaddy, nameservers `ns33`/`ns34.domaincontrol.com`):
 
 | Type | Name | Value |
 |:--|:--|:--|
 | A | `@` | `216.150.1.1` |
 | CNAME | `www` | `cname.vercel-dns.com` |
 
-If a domain stops resolving or shows a certificate error, check these two records first, then `GET` the domain config in Vercel. A certificate for `www` alone does not cover the apex; the apex needs its own certificate.
+If the domain stops resolving or shows a certificate error, check these two records first. A certificate for `www` does not cover the bare domain; each needs its own.
 
 <details>
 <summary><strong>Two things that only break on Vercel</strong></summary>
 <br>
 
-- **PDF fonts.** pdfkit requires its built-in fonts with a dynamic `require` that output tracing cannot see. `next.config.mjs` ships them explicitly via `outputFileTracingIncludes`; without it the PDF route fails with `Cannot find module …/standard-fonts/Helvetica.cjs` — on Vercel only, never locally.
-- **Hydration.** The intake form is server-rendered, then hydrated. Automated tests must wait for hydration before typing or React resets the inputs.
+- **PDF fonts and images.** pdfkit requires its built-in fonts with a dynamic `require` that output tracing cannot see, and the PDF reads its logo and placeholder from `public/images`. `next.config.mjs` ships both via `outputFileTracingIncludes`; without it the PDF route fails on Vercel only.
+- **Hydration.** The intake form is server-rendered, then hydrated. Automated tests must wait for hydration before interacting, or React resets the inputs.
 
 </details>
 
@@ -325,22 +337,24 @@ If a domain stops resolving or shows a certificate error, check these two record
 | `0003_fix_claims_guard_return_on_delete.sql` | BEFORE DELETE triggers must return `OLD`, not `NEW` |
 | `0004_calculations_multiplier_tiers.sql` | Stores the multiplier schedule each calculation used |
 | `0005_account_managers.sql` | `account_managers (name, active, sort_order)` — the *Prepared by* list; seeded with Dian, Aleshia, Lou, Mel, Keti |
+| `0006_bedrooms_to_ten_retire_mgmt_fee.sql` | Loss bedrooms widen to 1–10; the management fee column defaults to 0 |
 
-*Prepared by* is chosen from that table, so a name can be added or retired without a deploy. `listAccountManagers()` loads the active names and the server action rejects any name not on the list. Without Supabase the form falls back to `DEFAULT_ACCOUNT_MANAGERS` in `src/lib/account-managers.ts`.
+All six are applied to the production Supabase project. Add or retire an account manager by editing the table; no deploy is needed. Without Supabase the form falls back to `DEFAULT_ACCOUNT_MANAGERS` in `src/lib/account-managers.ts`.
 
 `open_revision(claim_id, reason, actor, note)` is the one sanctioned route through the lock. It sets a transaction-scoped flag, writes a reason-coded `revisions` row, and reopens the claim at the next version. There is no way to hold the window open.
 
 <br>
 
-## Working with Claude Code
-
-This repo is set up for [Claude Code](https://claude.ai/code):
+## Working in this repo
 
 | | |
 |:--|:--|
 | [`CLAUDE.md`](CLAUDE.md) | Commands, the cross-file architecture, decisions that look like bugs, deploy gotchas |
-| [`/frv`](.claude/skills/frv/SKILL.md) | Operational checklist and hard-won learnings |
-| [`/frvcalcupdate`](.claude/skills/frvcalcupdate/SKILL.md) | Recipes for changing multipliers, fees, comp rules, report headings, content blocks and the logo — with the sign-off protocol and which fixtures each change moves |
+| [`/frv`](.claude/skills/frv/SKILL.md) | Operational checklist |
+| [`/frvcalcupdate`](.claude/skills/frvcalcupdate/SKILL.md) | Recipes for changing multipliers, furniture rates, comp rules, report headings and the logo, with the sign-off protocol and which fixtures each change moves |
+| [`docs/DECISIONS.md`](docs/DECISIONS.md) | Why things are the way they are |
+
+Branch, open a PR, let CI run typecheck, tests and build, merge to `main`. Commit messages use conventional prefixes (`feat(core):`, `fix(pdf):`, `db:`, `docs:`).
 
 <br>
 
@@ -348,26 +362,22 @@ This repo is set up for [Claude Code](https://claude.ai/code):
 
 | | |
 |:--|:--|
-| ✅ | Calculation core, validation, fixtures |
+| ✅ | Calculation core, validation, reference fixtures |
 | ✅ | Schema with trigger-enforced locking and `open_revision()` |
-| ✅ | One-page intake with live figure, editable multiplier schedule, Firecrawl listing lookup and *Find comparables* shortlist (operator-chosen radius to 100 miles, unfurnished only, likeness ranking, result filters) |
-| ✅ | Google Places autocomplete on the loss address (optional key; plain input without it) |
-| ✅ | Street View photo and aerial map with loss + comp pins on the report (optional server key) |
-| ✅ | Report — web preview and PDF from one view-model, with attribution |
-| ✅ | Stored-figure reads, seed data, health check, env validation |
-| ✅ | Deployed to Vercel, verified end to end in production |
-| ✅ | Custom domain `frvasap.com` (apex) with `www` redirect and automatic HTTPS |
-| ✅ | Migration `0005_account_managers` applied to the production Supabase project |
-| ✅ | Google Maps keys set in Vercel (production and preview); Street View, aerial map and Places autocomplete enabled |
+| ✅ | One-page intake: live figure, steppers for bedrooms and bathrooms, 1–12 month term dropdown, editable multipliers |
+| ✅ | Loss bedrooms 1–10 with furniture rates to 10; management fee retired |
+| ✅ | *Prepared by* dropdown backed by `account_managers`, validated server-side |
+| ✅ | Firecrawl listing lookup and *Find comparables* (radius to 100 miles, unfurnished only, likeness ranking, filters) |
+| ✅ | Google Places autocomplete on the loss address |
+| ✅ | Report: web and one-page PDF from one view-model, Street View and aerial map, Zillow attribution, Nova Havens branding |
+| ✅ | Live at `frvasap.com` with automatic HTTPS; migrations 0001–0006 applied to production |
 | ◻️ | Revision flow UI |
 | ◻️ | Claim list |
-| ✅ | *Prepared by* dropdown backed by an `account_managers` table, validated server-side |
 | ◻️ | Authentication — deferred; *Prepared by* (a chosen name, not a login) writes to every audit row until then |
-| ✅ | Nova Havens logo on the web and PDF report |
 
 ## Not built, on purpose
 
-No comp discovery. No interactive map on the intake form (the report carries static imagery only). No amenity fields. No market-value input. No insured-facing views — the insured never sees the FRV.
+No automatic comp selection. No interactive map on the intake form (the report carries static imagery only). No amenity fields. No market-value input. No insured-facing views — the insured never sees the FRV.
 
 Choices that look odd from the outside are recorded in [`docs/DECISIONS.md`](docs/DECISIONS.md) so nobody re-litigates them in six months without the context that settled them.
 

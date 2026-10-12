@@ -35,8 +35,12 @@ export class ValidationFailedError extends Error {
 /**
  * The FRV.
  *
- *   per comp:  (base rent × multiplier) + furniture + management fee
+ *   per comp:  (base rent × multiplier) + furniture
  *   output:    the mean of the three
+ *
+ * A management fee was part of the formula until October 2026. It is retired:
+ * `loss.managementFeeCents` defaults to zero, and is honoured only so the PRD
+ * reference reports and earlier stored figures can still be reproduced.
  *
  * Deterministic by requirement — no model sits anywhere in this path, and the
  * same inputs always produce the same report. Every intermediate figure is
@@ -55,7 +59,7 @@ export function calculateFrv(loss: LossProperty, rawComps: readonly Comp[]): Cal
   const tiers = assertValidTiers(loss.multiplierTiers ?? MULTIPLIER_TIERS);
   const multiplier = multiplierForTerm(loss.termMonths, tiers);
   const furnitureCents = furnitureForBedrooms(loss.bedrooms);
-  const { managementFeeCents } = loss;
+  const managementFeeCents = loss.managementFeeCents ?? 0;
 
   const comps: EvaluatedComp[] = sortHighToLow(rawComps).map((comp, index) => {
     const adjustedRentCents = applyMultiplier(comp.rentCents, multiplier);

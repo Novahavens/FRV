@@ -40,6 +40,12 @@ export const LEGACY_MULTIPLIER_TIERS: readonly MultiplierTier[] = [
  * Flat monthly furniture, housewares and appliances by bedroom count.
  * Does not scale with lease length: a one-month and a nine-month placement
  * carry the same figure.
+ *
+ * 1–5 are the original rates. 6–10 were added in October 2026 (Lou, via
+ * Fazal): each continues from 5 bedrooms at the average step ratio of the
+ * original table, (1,746 / 1,059)^(1/4) ≈ 1.1332, rounded to whole dollars.
+ * They are stored as fixed figures, not computed, so a report can never print
+ * a rate the engine did not use.
  */
 export const FURNITURE_BY_BEDROOM: Readonly<Record<number, Cents>> = {
   1: 1_059_00,
@@ -47,9 +53,22 @@ export const FURNITURE_BY_BEDROOM: Readonly<Record<number, Cents>> = {
   3: 1_456_00,
   4: 1_600_00,
   5: 1_746_00,
+  6: 1_978_00,
+  7: 2_242_00,
+  8: 2_540_00,
+  9: 2_879_00,
+  10: 3_262_00,
 };
 
-export const DEFAULT_MANAGEMENT_FEE_CENTS: Cents = 240_00;
+/** Loss bedroom counts the methodology covers: one per furniture rate. */
+export const MAX_LOSS_BEDROOMS = 10;
+
+/**
+ * The management fee is retired (October 2026, Lou): new FRVs carry none. The
+ * $240 figure survives only in the PRD reference fixtures and in calculations
+ * stored before the change, which render from their stored figures.
+ */
+export const LEGACY_MANAGEMENT_FEE_CENTS: Cents = 240_00;
 
 /** Exactly three. Not two, not five. */
 export const REQUIRED_COMP_COUNT = 3;
