@@ -32,6 +32,7 @@ import { EMPTY_FILTER, type CandidateFilter, type CompCandidate, type SearchResu
 import { filterCandidates, filterOptions } from '@/lib/listings/filters';
 import { geocode, lookupListing, searchComps, submitFrv, type SubmitState } from './actions';
 import styles from './ClaimForm.module.css';
+import { Stepper } from '@/components/ui/Stepper';
 
 /**
  * One page. The figure updates as you type, and submit is the only state change.
@@ -324,10 +325,8 @@ export function ClaimForm({ accountManagers }: { accountManagers: AccountManager
             helper={lat && lng ? `Located at ${Number(lat).toFixed(4)}, ${Number(lng).toFixed(4)}` : 'Coordinates are looked up when you leave this field.'} />
 
           <div className={styles.quad}>
-            <Field id="loss-beds" label="Bedrooms" value={bedrooms} mono inputMode="numeric"
-              onChange={(e) => setBedrooms(e.target.value)} />
-            <Field id="loss-baths" label="Bathrooms" value={bathrooms} mono inputMode="decimal"
-              onChange={(e) => setBathrooms(e.target.value)} />
+            <Stepper id="loss-beds" label="Bedrooms" value={bedrooms} onChange={setBedrooms} min={1} max={5} step={1} />
+            <Stepper id="loss-baths" label="Bathrooms" value={bathrooms} onChange={setBathrooms} min={0.5} max={10} step={0.5} />
             <Field id="loss-sqft" label="Square footage" value={sqft} mono inputMode="numeric" placeholder="2,100"
               onChange={(e) => setSqft(e.target.value)} />
             <Field id="loss-term" label="Approved term" value={termMonths} mono inputMode="numeric"
@@ -438,10 +437,10 @@ export function ClaimForm({ accountManagers }: { accountManagers: AccountManager
             <div className={styles.quad}>
               <Field id={`comp-${i}-rent`} label="Rent" value={comp.rent} prefix="$" mono placeholder="3,835"
                 onChange={(e) => patchComp(i, { rent: e.target.value })} />
-              <Field id={`comp-${i}-beds`} label="Bedrooms" value={comp.bedrooms} mono inputMode="numeric"
-                onChange={(e) => patchComp(i, { bedrooms: e.target.value })} />
-              <Field id={`comp-${i}-baths`} label="Bathrooms" value={comp.bathrooms} mono inputMode="decimal"
-                onChange={(e) => patchComp(i, { bathrooms: e.target.value })} />
+              <Stepper id={`comp-${i}-beds`} label="Bedrooms" value={comp.bedrooms} min={1} max={10} step={1}
+                onChange={(v) => patchComp(i, { bedrooms: v })} />
+              <Stepper id={`comp-${i}-baths`} label="Bathrooms" value={comp.bathrooms} min={0.5} max={10} step={0.5}
+                onChange={(v) => patchComp(i, { bathrooms: v })} />
               <Field id={`comp-${i}-sqft`} label="Square footage" value={comp.sqft} mono inputMode="numeric"
                 onChange={(e) => patchComp(i, { sqft: e.target.value })} />
             </div>
