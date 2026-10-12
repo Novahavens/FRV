@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { Field } from '@/components/ui/primitives';
 import styles from './AddressAutocomplete.module.css';
+import { loadPlaces } from './places-loader';
 
 /**
  * Loss address input with optional Google Places suggestions.
@@ -37,30 +38,6 @@ interface Props {
 type PlacesLib = google.maps.PlacesLibrary;
 type Suggestion = google.maps.places.AutocompleteSuggestion;
 
-let mapsPromise: Promise<PlacesLib> | null = null;
-
-/** Loads the Maps JS API once per page, however many components mount. */
-function loadPlaces(apiKey: string): Promise<PlacesLib> {
-  if (mapsPromise) return mapsPromise;
-  mapsPromise = new Promise<void>((resolve, reject) => {
-    if (typeof google !== 'undefined' && typeof google.maps?.importLibrary === 'function') return resolve();
-    const script = document.createElement('script');
-    script.src =
-      `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(apiKey)}` +
-      '&v=weekly&libraries=places&loading=async';
-    script.async = true;
-    script.onload = () => resolve();
-    script.onerror = () => reject(new Error('Google Maps failed to load'));
-    document.head.appendChild(script);
-  })
-    .then(() => google.maps.importLibrary('places') as Promise<PlacesLib>)
-    .catch((err) => {
-      mapsPromise = null;
-      throw err;
-    });
-  return mapsPromise;
-}
-
 const MIN_CHARS = 3;
 const DEBOUNCE_MS = 250;
 
@@ -87,7 +64,8 @@ export function AddressAutocomplete({
     let cancelled = false;
     loadPlaces(apiKey).then(
       (lib) => { if (!cancelled) setPlaces(lib); },
-      () => { /* silent: plain input keeps working */ },
+      // The plain input keeps working; the warning is for whoever debugs it next.
+      (err: unknown) => { console.warn('Address suggestions unavailable:', err); },
     );
     return () => { cancelled = true; };
   }, [apiKey]);

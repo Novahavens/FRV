@@ -120,7 +120,7 @@ Furniture follows the **loss** property's bedroom count, never the comp's, and d
 One page, top to bottom:
 
 - **Prepared by** is a dropdown of account managers, read from the `account_managers` table. The server rejects a name not on the list, so the audit trail carries one spelling per person.
-- **Loss address** offers Google Places suggestions when `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` is set; picking one fills the address and coordinates together. Without the key it is a plain field, and the US Census geocoder looks the coordinates up when the field loses focus. Coordinates are captured once and stored, because Rule 4 depends on them.
+- **Loss address** offers Google Places suggestions when `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` is set; picking one fills the address and coordinates together. Without the key it is a plain field, and the US Census geocoder looks the coordinates up when the field loses focus. Coordinates are captured once and stored, because Rule 4 depends on them. The Maps script is loaded once per page by `places-loader.ts`, which waits for Google's own ready callback before asking for the Places library.
 - **Bedrooms and bathrooms** are steppers with up and down arrows, not typed. Loss bedrooms run 1–10, one per furniture rate; comp bedrooms 1–10; bathrooms 0.5–10 in half steps. A listing value between steps, such as 1.75 baths, snaps to the next step in the direction pressed.
 - **Approved term** is a dropdown of 1 to 12 months, defaulting to 3. The engine accepts longer terms; the form offers the first year.
 - **Short-term multipliers** show the five tiers as editable percentages, pre-filled with the defaults.
