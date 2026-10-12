@@ -211,11 +211,23 @@ describe('rule enforcement', () => {
     expect(validate(coppellLoss, sneaky).passed).toBe(false);
   });
 
-  it('blocks a comp past five miles rather than widening', () => {
+  it('notes but neither blocks nor requires justification between five and one hundred miles', () => {
     const far = [comps[0]!, comps[1]!, comp({ id: 'c3', rentCents: 3_200_00, sqft: 1900, lat: 33.15, lng: -96.99 })];
     const result = validate(coppellLoss, far);
+    expect(result.passed).toBe(true);
+    expect(result.requiresJustification).toHaveLength(0);
+    const note = result.events.find((e) => e.rule === 'rule-4-geography');
+    expect(note?.tone).toBe('info');
+    expect(() => calculateFrv(coppellLoss, far)).not.toThrow();
+  });
+
+  it('blocks a comp past one hundred miles rather than widening', () => {
+    // Coppell → roughly Waco: about 95 mi south is still inside; 1.6° south is ~110 mi.
+    const tooFar = [comps[0]!, comps[1]!, comp({ id: 'c3', rentCents: 3_200_00, sqft: 1900, lat: 31.36, lng: -96.99 })];
+    const result = validate(coppellLoss, tooFar);
     expect(result.passed).toBe(false);
     expect(result.events[0]!.rule).toBe('rule-4-geography');
+    expect(result.events[0]!.terminal).toBe(true);
   });
 
   it('warns but does not block between two and five miles', () => {

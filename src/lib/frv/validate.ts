@@ -31,7 +31,11 @@ export function checkUnfurnished(comp: Comp, listingText = ''): ValidationEvent 
   };
 }
 
-/** Rule 4 — geography. Never widens silently past five miles. */
+/**
+ * Rule 4 — geography. Under two miles passes silently; two to five needs a
+ * written justification; five to one hundred is permitted and noted on the
+ * record (October 2026); past one hundred the calculation halts.
+ */
 export function checkGeography(comp: Comp, loss: LossProperty): ValidationEvent | null {
   const miles = distanceMiles(loss, comp);
   const { band, tone } = classifyDistance(miles);
@@ -49,6 +53,18 @@ export function checkGeography(comp: Comp, loss: LossProperty): ValidationEvent 
     };
   }
 
+  if (band === 'extended') {
+    return {
+      rule: 'rule-4-geography',
+      tone,
+      compId: comp.id,
+      message: `This comp is ${formatMiles(miles)} from the loss address.`,
+      detail:
+        'Past five miles is permitted up to one hundred. No justification is required; ' +
+        'the distance is printed on the report.',
+    };
+  }
+
   return {
     rule: 'rule-4-geography',
     tone: 'block',
@@ -56,8 +72,8 @@ export function checkGeography(comp: Comp, loss: LossProperty): ValidationEvent 
     terminal: true,
     message: `This comp is ${formatMiles(miles)} from the loss address.`,
     detail:
-      'Past five miles the calculation stops rather than widening. Choose a closer ' +
-      'comp, or flag the claim for manual review.',
+      'Past one hundred miles the calculation stops rather than widening. Choose a ' +
+      'closer comp, or flag the claim for manual review.',
   };
 }
 

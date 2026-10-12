@@ -1,4 +1,4 @@
-import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode } from 'react';
+import type { ButtonHTMLAttributes, ChangeEvent, InputHTMLAttributes, ReactNode } from 'react';
 import type { Tone } from '@/lib/frv';
 import styles from './primitives.module.css';
 
@@ -68,6 +68,47 @@ export function Field({ label, helper, error, prefix, mono, id, ...rest }: Field
       ) : (
         input
       )}
+      {(error || helper) && (
+        <p id={describedBy} className={styles.msg} role={error ? 'alert' : undefined}>
+          {error ?? helper}
+        </p>
+      )}
+    </div>
+  );
+}
+
+type SelectProps = {
+  label: string;
+  helper?: string;
+  error?: string;
+  id?: string;
+  value: string;
+  onChange: (e: ChangeEvent<HTMLSelectElement>) => void;
+  options: Array<{ value: string; label: string }>;
+  placeholder?: string;
+};
+
+/** A native select in the same visual language as Field: label above, message below. */
+export function Select({ label, helper, error, id, value, onChange, options, placeholder }: SelectProps) {
+  const fieldId = id ?? `f-${label.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
+  const describedBy = helper || error ? `${fieldId}-msg` : undefined;
+
+  return (
+    <div className={`${styles.field} ${error ? styles.invalid : ''}`}>
+      <label className={styles.label} htmlFor={fieldId}>{label}</label>
+      <select
+        id={fieldId}
+        value={value}
+        onChange={onChange}
+        className={`${styles.input} ${styles.select}`}
+        aria-invalid={error ? true : undefined}
+        aria-describedby={describedBy}
+      >
+        {placeholder && <option value="" disabled>{placeholder}</option>}
+        {options.map((o) => (
+          <option key={o.value} value={o.value}>{o.label}</option>
+        ))}
+      </select>
       {(error || helper) && (
         <p id={describedBy} className={styles.msg} role={error ? 'alert' : undefined}>
           {error ?? helper}

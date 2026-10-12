@@ -56,7 +56,7 @@ Every change here is a **methodology or carrier-facing change**, not a code chan
 `ClaimForm.tsx` already builds its comp slots from `REQUIRED_COMP_COUNT`.
 
 **Rules** — all in `src/lib/frv/validate.ts`, each a `check*()` returning a `ValidationEvent` with `tone: 'block' | 'warn'`:
-- Geography bands → `RADIUS_BANDS` in `constants.ts` (`clean: 1`, `acceptable: 2`, `needsJustification: 5` miles; past the last → block).
+- Geography bands → `RADIUS_BANDS` in `constants.ts` (`clean: 1`, `acceptable: 2`, `needsJustification: 5`, `limit: 100` miles; 5–100 is the `extended` band, tone `info`, no justification; past `limit` → block). `classifyDistance` in `geo.ts` maps miles to the band.
 - Size tolerance → `SQFT_TOLERANCE = 0.15`.
 - Variance warning → `checkVariance(comps, thresholdCents = 1_500_00)`.
 - Furnished detection → `FURNISHED_KEYWORDS`. Rule 1 is a hard block **and** a DB check constraint; don't soften one without the other.
@@ -66,7 +66,16 @@ A `'block'` event makes `calculateFrv()` throw `ValidationFailedError`; a `'warn
 
 ## Recipe: Comp search shortlist (Find comparables)
 
-`src/lib/listings/candidates.ts` → `DEFAULT_CRITERIA` (bedroomVariance 1, bathroomVariance 1, sqftTolerance = SQFT_TOLERANCE, radiusMiles — chosen by the operator from `SEARCH_RADIUS_STEPS` in `src/lib/frv/constants.ts`, default 2.5; there is no automatic widening). Those are eligibility gates. Order is by likeness, then distance: `scoreLikeness` weights beds exact 0.35, baths exact 0.25 (half-bath off 0.15), size closeness 0.30, single-family 0.10 — change the weights there. Never rank by rent (that steers selection; see DECISIONS.md). Apartment communities (`is_building`) and anything past five miles are never shown. Result filters (home type, pets, available-by, exact beds/baths) are the pure `src/lib/listings/filters.ts`; tests in `tests/candidates.test.ts` and `tests/filters.test.ts`. The upstream `beds_min`/`baths_min` in `firecrawl.ts#search` derive from the same criteria.
+`src/lib/listings/candidates.ts` → `DEFAULT_CRITERIA` (bedroomVariance 1, bathroomVariance 1, sqftTolerance = SQFT_TOLERANCE, radiusMiles — chosen by the operator from `SEARCH_RADIUS_STEPS` in `src/lib/frv/constants.ts`: 2.5 / 3 / 4 / 5 / 10 / 25 / 50 / 100, default 2.5; there is no automatic widening). Those are eligibility gates. **Unfurnished only:** `rental_search` can restrict to furnished but not away from it, so the search also pulls one `furnished=true` page per region and subtracts those listings before `rankCandidates` (one extra Firecrawl call per region); Rule 1's full-text check on pick remains the final gate. Past 5 miles the region strategy adds the state (ZIP + city + state, 4 pages per region, 10 total) and coverage thins. Candidates past 5 miles render with a light red hue and a "Past 5 mi" chip as a cue; Rule 4's extended band (`RADIUS_BANDS.limit = 100`) permits them without justification, >100 blocks. Changing the bands is `RADIUS_BANDS` in `constants.ts`, not a picker change. The nudge ladder walks 5 → 10 → 25 → 50 → 100; at 100 the copy says it is the widest search. Order is by likeness, then distance: `scoreLikeness` weights beds exact 0.35, baths exact 0.25 (half-bath off 0.15), size closeness 0.30, single-family 0.10 — change the weights there. Never rank by rent (that steers selection; see DECISIONS.md). Apartment communities (`is_building`) are never shown. Result filters (home type, pets, available-by, exact beds/baths) are the pure `src/lib/listings/filters.ts`; tests in `tests/candidates.test.ts` and `tests/filters.test.ts`. The upstream `beds_min`/`baths_min` in `firecrawl.ts#search` derive from the same criteria.
+
+## Recipe: Account managers ("Prepared by")
+
+Not a methodology change and needs no sign-off; it is reference data.
+
+- **Add or retire a name:** edit the `account_managers (name, active, sort_order)` table in Supabase. New name: insert a row with `active = true` and a `sort_order`. Retire: set `active = false`, don't delete, so names on past audit rows still resolve. No deploy; `listAccountManagers()` in `src/lib/db/account-managers.ts` loads active names on each intake load.
+- **Fallback list:** `DEFAULT_ACCOUNT_MANAGERS` in `src/lib/account-managers.ts` is used when Supabase isn't configured. Keep it in step with the table when the roster changes materially. The seed in `0005_account_managers.sql` is Dian, Aleshia, Lou, Mel, Keti.
+- The server action in `claims/new/actions.ts` rejects a name not on the list. Don't loosen it to accept free text; the point is one canonical name per person in the audit trail.
+- Changing the table's shape is a new migration, never an edit to `0005`.
 
 ## Recipe: Selection / averaging
 

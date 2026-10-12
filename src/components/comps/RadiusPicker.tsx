@@ -35,7 +35,7 @@ export function RadiusPicker({
           );
         })}
       </div>
-      <span className={styles.helper}>Comps past 5 miles are blocked by Rule 4.</span>
+      <span className={styles.helper}>Comps past 5 miles are shown in red as a cue. Rule 4 allows them up to 100 miles.</span>
     </div>
   );
 }

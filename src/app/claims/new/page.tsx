@@ -1,10 +1,14 @@
 import Link from 'next/link';
+import { listAccountManagers } from '@/lib/db/account-managers';
 import { ClaimForm } from './ClaimForm';
 import styles from './page.module.css';
 
 export const metadata = { title: 'New FRV — Nova Havens' };
+// The account-manager list comes from the database on every request, not at build time.
+export const dynamic = 'force-dynamic';
 
-export default function NewClaimPage() {
+export default async function NewClaimPage() {
+  const accountManagers = await listAccountManagers();
   return (
     <main className={styles.page}>
       <header className={styles.head}>
@@ -17,7 +21,7 @@ export default function NewClaimPage() {
         </div>
         <Link href="/" className={styles.back}>Back to workspace</Link>
       </header>
-      <ClaimForm />
+      <ClaimForm accountManagers={accountManagers} />
     </main>
   );
 }
