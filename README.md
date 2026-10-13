@@ -14,7 +14,7 @@
 <p>
   <a href="https://github.com/Novahavens/FRV/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/Novahavens/FRV/actions/workflows/ci.yml/badge.svg"></a>
   <a href="https://frvasap.com"><img alt="Live at frvasap.com" src="https://img.shields.io/badge/live-frvasap.com-000000?style=flat-square&logo=vercel&logoColor=white"></a>
-  <img alt="Tests" src="https://img.shields.io/badge/tests-118%20passing-05803b?style=flat-square&logo=vitest&logoColor=white">
+  <img alt="Tests" src="https://img.shields.io/badge/tests-127%20passing-05803b?style=flat-square&logo=vitest&logoColor=white">
   <img alt="Next.js 15" src="https://img.shields.io/badge/Next.js-15-0a0a0a?style=flat-square&logo=nextdotjs">
   <img alt="React 19" src="https://img.shields.io/badge/React-19-20232a?style=flat-square&logo=react&logoColor=61dafb">
   <img alt="TypeScript strict" src="https://img.shields.io/badge/TypeScript-strict-276ef1?style=flat-square&logo=typescript&logoColor=white">
@@ -240,6 +240,7 @@ src/
 │   ├── db/             Supabase access — the only layer that knows about storage
 │   └── env.ts          Environment, validated once
 ├── components/         UI bound to design tokens, including the Stepper control
+│   └── forms/          Loss address autocomplete; places-loader.ts loads Google Maps once
 └── app/
     ├── claims/new/     Intake: one page, live figure, server actions
     ├── report/         On-screen report
@@ -247,7 +248,7 @@ src/
 
 supabase/   Schema, lock triggers, open_revision(), seed
 tests/      Reference fixtures and unit tests
-docs/       Decision log, assets
+docs/       Decision log, assets, planned work (docs/plans/)
 ```
 
 Four ideas carry the whole design.
@@ -353,6 +354,7 @@ All six are applied to the production Supabase project. Add or retire an account
 | [`/frv`](.claude/skills/frv/SKILL.md) | Operational checklist |
 | [`/frvcalcupdate`](.claude/skills/frvcalcupdate/SKILL.md) | Recipes for changing multipliers, furniture rates, comp rules, report headings and the logo, with the sign-off protocol and which fixtures each change moves |
 | [`docs/DECISIONS.md`](docs/DECISIONS.md) | Why things are the way they are |
+| [`docs/plans/`](docs/plans/) | Planned work that is not built yet |
 
 Branch, open a PR, let CI run typecheck, tests and build, merge to `main`. Commit messages use conventional prefixes (`feat(core):`, `fix(pdf):`, `db:`, `docs:`).
 
@@ -367,8 +369,9 @@ Branch, open a PR, let CI run typecheck, tests and build, merge to `main`. Commi
 | ✅ | One-page intake: live figure, steppers for bedrooms and bathrooms, 1–12 month term dropdown, locked multipliers |
 | ✅ | Loss bedrooms 1–10 with furniture rates to 10; management fee retired |
 | ✅ | *Prepared by* dropdown backed by `account_managers`, validated server-side |
-| ✅ | Firecrawl listing lookup and *Find comparables* (radius to 100 miles, unfurnished only, likeness ranking, filters) |
-| ✅ | Google Places autocomplete on the loss address |
+| ✅ | Firecrawl listing lookup and *Find comparables* (radius 5–50 miles, unfurnished only, likeness ranking, filters) |
+| ✅ | Google Places autocomplete on the loss address (loader waits for Maps' ready callback) |
+| ◻️ | Installable web app (desktop and mobile) — planned in [`docs/plans/web-app-download-plan.md`](docs/plans/web-app-download-plan.md), not started |
 | ✅ | Report: web and one-page PDF from one view-model, Street View and aerial map, Zillow attribution, Nova Havens branding |
 | ✅ | Live at `frvasap.com` with automatic HTTPS; migrations 0001–0006 applied to production |
 | ◻️ | Revision flow UI |

@@ -15,7 +15,7 @@ FRV = (base comp rent × term multiplier) + furniture (management fee retired Oc
 - Furnished comps are rejected with no override; 2–5 miles needs justification, 5–100 is permitted and noted, >100 miles halts; bathrooms are intentionally not matched.
 
 ## Commands
-`npm ci` · `npm run verify` (typecheck + 55 tests + build) · `npm run dev`
+`npm ci` · `npm run verify` (typecheck + 127 tests + build) · `npm run dev`
 
 ## Learnings (hard-won)
 - Keep React stable (^19) with Next ^15.5. The original `19.0.0-rc` pin broke `npm install` via `@react-pdf/renderer` peer deps.
@@ -37,3 +37,5 @@ FRV = (base comp rent × term multiplier) + furniture (management fee retired Oc
 - Comp search (`Find comparables`) = `rental_search` → `rankCandidates()` → operator clicks → existing `lookup()`. Gates in `DEFAULT_CRITERIA`, order by `scoreLikeness` then distance (never rent), both in `src/lib/listings/candidates.ts`; result filters in `filters.ts`; tests in `tests/candidates.test.ts` and `tests/filters.test.ts`. Radius is the operator's pick from `SEARCH_RADIUS_STEPS` (5 / 10 / 25 / 50, default 5, no auto-widening). `rental_search` has no radius filter, so geography is applied client-side from Haversine. A 5 mi search costs ~4 Firecrawl calls (ZIP and city, two pages each); past 5 mi adds the state (4 pages per region, 10 total) and coverage thins. Results are unfurnished only: `rental_search` can't exclude furnished, so one `furnished=true` page per region is pulled and subtracted before ranking (one extra call per region); Rule 1's full-text check on pick is still the final gate. Candidates past 5 mi show a light red hue and a "Past 5 mi" chip as a cue; Rule 4's extended band permits them up to 100 mi (`RADIUS_BANDS.limit`), >100 blocks. Each pick 1 more call.
 - "Prepared by" is a dropdown from the `account_managers` table (migration `0005`; `listAccountManagers()` in `src/lib/db/account-managers.ts`; fallback `DEFAULT_ACCOUNT_MANAGERS` in `src/lib/account-managers.ts`). The server action rejects names not on the list. Add or retire a name by editing the table, no deploy.
 - Migrations: `0001` init + lock triggers, `0002` pinned search_path, `0003` delete-trigger return, `0004` `calculations.multiplier_tiers`, `0005` `account_managers`.
+- Google Maps with `loading=async` fires the script's `onload` before `google.maps.importLibrary` exists. Resolve on the API's `callback` parameter (`places-loader.ts`), or Places never starts and the field fails silently (fixed Oct 2026, #24).
+- *Find comps* is gated on loss address and square footage. The note under the button names the missing field, because an empty square footage looks like a broken button to operators (Oct 2026, #26).

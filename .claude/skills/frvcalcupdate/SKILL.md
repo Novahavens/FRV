@@ -13,7 +13,7 @@ Every change here is a **methodology or carrier-facing change**, not a code chan
 2. **Branch** from `main`: `git checkout -b feat(calc)/<what>` (or `fix(report)/…`).
 3. **Make the change in exactly one source of truth** (recipes below). Never hardcode a second copy — the report tables are generated from the same constants the engine uses, so a value only needs to move once.
 4. **Update the fixtures deliberately.** `tests/calculate.test.ts` and `tests/report.test.ts` pin Coppell = **$6,448.50** and Camarillo = **$10,145** to the cent. If the change *should* move them, recompute by hand, update the expected values in the same commit, and say so in the PR body. If it *shouldn't* move them and does, stop — something leaked.
-5. `npm run verify` (typecheck + 55 tests + build). Also `npm run build` must pass with **no env vars**.
+5. `npm run verify` (typecheck + 127 tests + build). Also `npm run build` must pass with **no env vars**.
 6. **Locked reports never change.** `loadLockedClaim()` reads stored `calculations` rows; existing reports keep their figures. Only new claims pick up a methodology change. If an existing claim must reflect the change, that is an `open_revision()` with a `revision_reason`, not a recalculation.
 7. PR → CI → merge to `main` → Vercel auto-deploys. Smoke-test production (password-protected) by submitting a claim and downloading the PDF.
 8. Add a line to `docs/DECISIONS.md` if the change reverses or qualifies a recorded decision.
@@ -27,8 +27,7 @@ Every change here is a **methodology or carrier-facing change**, not a code chan
 **Locked:** the intake form (`ClaimForm.tsx`, "Short-term multipliers" card) shows the schedule read-only, and `actions.ts` never reads a client-sent `multiplierTiers`, so the server always applies `MULTIPLIER_TIERS`. The schedule is stored in `calculations.multiplier_tiers` (`tiersToStored`, open-ended tier `maxMonths: null`) and printed via `model.ts → multiplierTable` (`tierLabel`/`markupLabel`). Changing the schedule is a constants change plus a DECISIONS entry; claims already locked keep theirs.
 
 - Changing a **default**: edit `MULTIPLIER_TIERS` only. Tests: `'multiplier tiers — defaults'` in `calculate.test.ts` (per-term table and the `tierLabel` test) and the defaults row in `report.test.ts`.
-- Changing **boundaries** (e.g. a 4–6 month tier): edit both `MULTIPLIER_TIERS` and `LEGACY_MULTIPLIER_TIERS`' *shape* only if the form must show the new rows (the form builds its rows from `MULTIPLIER_TIERS`); stored rows keep their own shape. `tierLabel` derives labels, so no copy to update.
-- Making boundaries editable too: extend the card to edit `maxMonths`, keep `assertValidTiers` as the gate.
+- Changing **boundaries** (e.g. a 4–6 month tier): edit `MULTIPLIER_TIERS`. The form's read-only table, the server (which always uses `MULTIPLIER_TIERS`) and the report's table all follow it; `tierLabel` derives labels, so no copy to update. Stored rows keep their own shape. Add a DECISIONS entry, since the schedule is locked by decision.
 - Fixture impact: the Coppell/Camarillo tests pass `LEGACY_MULTIPLIER_TIERS` explicitly and should not move when defaults change. If they move, the arithmetic changed.
 
 ## Recipe: Furniture rates

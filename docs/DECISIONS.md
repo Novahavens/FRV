@@ -40,6 +40,8 @@ Rule 5 is enforced by triggers on `claims`, `comps` and `calculations`, not by h
 
 ## Multipliers are editable per claim; defaults are +25% (October 2026)
 
+*Superseded 12 October 2026: the schedule is locked to Alacrity's percentages; see the last entry.*
+
 Approved by Lou, October 2026. Two changes, recorded together:
 
 1. **The default schedule moved.** Every markup is 25% higher than the original: 1–2 months 50% (was 40), 3–5 months 37.5% (was 30), 6–9 months 31.25% (was 25), 10–11 months 12.5% (was 10). Twelve months and beyond stays at no markup.
@@ -130,6 +132,8 @@ Terms of the implementation:
 
 ## Find comps: likeness first, radius is the operator's choice (October 2026)
 
+*Radius options superseded 12 October 2026: the picker offers 5, 10, 25 and 50 miles, default 5; see the last entry.*
+
 Fazal, 7 October 2026. Revises the ordering and radius terms of "Comp search is a shortlist, never a selection".
 
 **What changed**
@@ -179,6 +183,8 @@ Fazal, 7 October 2026. *Prepared by* was free text. It is now a dropdown of acco
 Not authentication. Anyone can still pick any name; the list makes the name canonical, not proven. Login remains deferred.
 
 ## Find comps: unfurnished only, radius to 100 miles, Rule 4 unchanged (October 2026)
+
+*Radius picker superseded 12 October 2026: the picker stops at 50 miles, default 5; Rule 4's 100-mile limit is unchanged. See the last entry.*
 
 Fazal, 7 October 2026. Two changes to *Find comps*, recorded together. Revises the radius terms of "Find comps: likeness first, radius is the operator's choice" and the "nothing past five miles is ever shown" line in "Comp search is a shortlist, never a selection".
 
