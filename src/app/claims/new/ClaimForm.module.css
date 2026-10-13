@@ -81,7 +81,13 @@ button.findReady {
   height: 40px; padding: 0 var(--space-4); border: 0; border-radius: 999px;
   color: rgba(255, 255, 255, 0.85); background: transparent;
   font-weight: 600; cursor: pointer;
-  transition: transform 160ms ease;
+  /* Lifted off the surface: a tight contact shadow plus two soft neon halos. */
+  transform: translateY(-2px);
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.18),
+    0 8px 16px -6px rgba(124, 58, 237, 0.5),
+    0 16px 32px -12px rgba(34, 211, 238, 0.4);
+  transition: transform 220ms cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 220ms ease;
 }
 /* Frosted glass body. */
 button.findReady::before {
@@ -97,8 +103,14 @@ button.findReady::after {
   border: 1px solid rgba(255, 255, 255, 0.25);
   mask-image: linear-gradient(170deg, #000, rgba(0, 0, 0, 0) 50%);
 }
-button.findReady:hover:not(:disabled) { transform: translateY(-1px); }
-button.findReady:active:not(:disabled) { transform: scale(0.98); }
+button.findReady:hover:not(:disabled) {
+  transform: translateY(-4px);
+  box-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.2),
+    0 12px 22px -8px rgba(124, 58, 237, 0.6),
+    0 22px 40px -14px rgba(236, 72, 153, 0.5);
+}
+button.findReady:active:not(:disabled) { transform: translateY(-1px) scale(0.98); }
 button.findReady:focus-visible { outline: 2px solid var(--accent-base); outline-offset: 3px; }
 /* Label sits above the glass layers. */
 .findLabel { position: relative; z-index: 4; }
@@ -150,6 +162,6 @@ button.findReady:hover:not(:disabled) .findGlow::before { opacity: 0.9; }
   to { transform: rotate(360deg); }
 }
 @media (prefers-reduced-motion: reduce) {
-  button.findReady, button.findReady:hover:not(:disabled) { transition: none; transform: none; }
+  button.findReady, button.findReady:hover:not(:disabled) { transition: none; }
   .findGlow::before, .findLaser { animation: none; }
 }
