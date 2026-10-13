@@ -65,8 +65,8 @@ describe('rankCandidates — radius', () => {
     expect(rankCandidates(loss, [r], { radiusMiles: 3 })).toHaveLength(1);
   });
 
-  it('defaults to 2.5 miles and never widens on its own', () => {
-    expect(rankCandidates(loss, [fit({ lat: milesNorth(2.8) })])).toHaveLength(0);
+  it('defaults to 5 miles and never widens on its own', () => {
+    expect(rankCandidates(loss, [fit({ lat: milesNorth(5.5) })])).toHaveLength(0);
   });
 
   it('stops at the chosen radius: 5.5 mi is out at 5, in at 10', () => {

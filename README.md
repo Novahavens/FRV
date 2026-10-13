@@ -57,15 +57,15 @@ There is **no management fee**. It was retired in October 2026 with Lou's sign-o
 <table>
 <tr><td valign="top">
 
-| Approved term | Default multiplier |
-|:--|--:|
-| 1 month | × 1.90 |
-| 2 months | × 1.80 |
-| 3 months | × 1.70 |
-| 4 – 11 months | × 1.60 |
-| 12+ months | × 1.00 |
+| Approved term | Markup | Multiplier |
+|:--|--:|--:|
+| 1 – 2 months | 40% | × 1.40 |
+| 3 – 5 months | 30% | × 1.30 |
+| 6 – 9 months | 25% | × 1.25 |
+| 10 – 11 months | 10% | × 1.10 |
+| 12+ months | 10% | × 1.10 |
 
-<sub>Defaults, approved by Lou in October 2026. Every tier is editable per claim; the schedule used is stored and printed.</sub>
+<sub>Locked, as Lou set them on 12 October 2026. The schedule is fixed on every claim, stored with it and printed on the report.</sub>
 
 </td><td valign="top">
 
@@ -123,7 +123,7 @@ One page, top to bottom:
 - **Loss address** offers Google Places suggestions when `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` is set; picking one fills the address and coordinates together. Without the key it is a plain field, and the US Census geocoder looks the coordinates up when the field loses focus. Coordinates are captured once and stored, because Rule 4 depends on them. The Maps script is loaded once per page by `places-loader.ts`, which waits for Google's own ready callback before asking for the Places library.
 - **Bedrooms and bathrooms** are steppers with up and down arrows, not typed. Loss bedrooms run 1–10, one per furniture rate; comp bedrooms 1–10; bathrooms 0.5–10 in half steps. A listing value between steps, such as 1.75 baths, snaps to the next step in the direction pressed.
 - **Approved term** is a dropdown of 1 to 12 months, defaulting to 3. The engine accepts longer terms; the form offers the first year.
-- **Short-term multipliers** show the five tiers as editable percentages, pre-filled with the defaults.
+- **Short-term multipliers** are locked: the form shows the schedule read-only, and the server ignores any other.
 - **Three comparables**, filled by pasting a Zillow URL or picked from *Find comparables*. Every field stays editable, and the audit trail records what a person changed.
 
 <br>
@@ -176,8 +176,8 @@ Listing data comes through **Firecrawl's catalogued Zillow capabilities**, appro
 
 - **Eligible:** active rentals within ±1 bedroom, ±1 bathroom and ±15% square footage of the loss. Apartment communities are excluded.
 - **Unfurnished only.** Zillow's search can restrict *to* furnished but not away from it, so each search also pulls the furnished listings and subtracts them, at one extra Firecrawl call per region. Rule 1's full-text check on pick is still the final gate.
-- **Radius is the operator's choice:** 2.5 miles by default, with a picker for 2.5 / 3 / 4 / 5 / 10 / 25 / 50 / 100 miles. Nothing widens automatically; thin results suggest the next step.
-- **Coverage thins as the radius grows.** Zillow searches by region, not radius: 2.5 miles searches the ZIP, 3–5 miles adds the city, and past 5 miles adds the state. Distance is then filtered by Haversine. A 100-mile search is the widest the tool can run, not an exhaustive one.
+- **Radius is the operator's choice:** 5 miles by default, with a picker for 5 / 10 / 25 / 50 miles. Nothing widens automatically; thin results suggest the next step.
+- **Coverage thins as the radius grows.** Zillow searches by region, not radius: 5 miles searches the ZIP and city, and past 5 miles adds the state. Distance is then filtered by Haversine. A 50-mile search is the widest the picker offers, not an exhaustive one.
 - **Order:** most like the loss first (bedrooms, bathrooms, size, single-family), nearest as the tiebreaker, never rent. Cards read "Exact match" or "Close match".
 - **Past 5 miles** a card shows a light red hue and a "Past 5 mi" chip as a cue. Rule 4 permits it up to 100 miles, and the distance prints on the report.
 - **Filter results** by home type, pets, available-by date, exact beds or exact baths, from facts the search already returns. Amenities such as garage or pool are not in those records and are not fetched.
@@ -364,7 +364,7 @@ Branch, open a PR, let CI run typecheck, tests and build, merge to `main`. Commi
 |:--|:--|
 | ✅ | Calculation core, validation, reference fixtures |
 | ✅ | Schema with trigger-enforced locking and `open_revision()` |
-| ✅ | One-page intake: live figure, steppers for bedrooms and bathrooms, 1–12 month term dropdown, editable multipliers |
+| ✅ | One-page intake: live figure, steppers for bedrooms and bathrooms, 1–12 month term dropdown, locked multipliers |
 | ✅ | Loss bedrooms 1–10 with furniture rates to 10; management fee retired |
 | ✅ | *Prepared by* dropdown backed by `account_managers`, validated server-side |
 | ✅ | Firecrawl listing lookup and *Find comparables* (radius to 100 miles, unfurnished only, likeness ranking, filters) |

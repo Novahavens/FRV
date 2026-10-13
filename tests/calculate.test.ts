@@ -45,20 +45,20 @@ const comp = (over: Partial<Comp> & Pick<Comp, 'id' | 'rentCents' | 'sqft'>): Co
   ...over,
 });
 
-describe('multiplier tiers — defaults (October 2026: 90/80/70/60%, none from 12 months)', () => {
+describe('multiplier tiers — locked defaults (Lou, 12 October 2026: 40/30/25/10%, 10% from 12 months)', () => {
   it.each([
-    [1, 1.9],
-    [2, 1.8],
-    [3, 1.7],
-    [4, 1.6], [11, 1.6],
-    [12, 1.0], [24, 1.0],
+    [1, 1.4], [2, 1.4],
+    [3, 1.3], [5, 1.3],
+    [6, 1.25], [9, 1.25],
+    [10, 1.1], [11, 1.1],
+    [12, 1.1], [24, 1.1],
   ])('term of %i months → ×%f', (months, expected) => {
     expect(multiplierForTerm(months)).toBe(expected);
   });
 
   it('labels single-month tiers in the singular/plural, ranges and the open tier', () => {
     expect(MULTIPLIER_TIERS.map((_, i) => tierLabel(MULTIPLIER_TIERS, i))).toEqual([
-      '1 month', '2 months', '3 months', '4–11 months', '12+ months',
+      '1–2 months', '3–5 months', '6–9 months', '10–11 months', '12+ months',
     ]);
     expect(LEGACY_MULTIPLIER_TIERS.map((_, i) => tierLabel(LEGACY_MULTIPLIER_TIERS, i))).toEqual([
       '1–2 months', '3–5 months', '6–9 months', '10–11 months', '12+ months',
@@ -90,7 +90,7 @@ describe('operator-entered schedules', () => {
 
   it('round-trips through JSON with the open-ended tier as null', () => {
     const stored = tiersToStored(MULTIPLIER_TIERS);
-    expect(stored.at(-1)).toEqual({ maxMonths: null, multiplier: 1 });
+    expect(stored.at(-1)).toEqual({ maxMonths: null, multiplier: 1.1 });
     expect(tiersFromStored(stored)).toEqual(MULTIPLIER_TIERS);
   });
 
@@ -115,7 +115,8 @@ describe('operator-entered schedules', () => {
       comp({ id: 'c2', rentCents: 3_600_00, sqft: 2100 }),
       comp({ id: 'c3', rentCents: 3_200_00, sqft: 1900 }),
     ]);
-    expect(result.multiplier).toBe(1.7);
+    // Coppell's term is 3 months: the locked 3–5 month band, 30%.
+    expect(result.multiplier).toBe(1.3);
     expect(result.multiplierTiers).toEqual(MULTIPLIER_TIERS);
   });
 });

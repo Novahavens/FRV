@@ -7,20 +7,21 @@ import type { Cents, MultiplierTier } from './types';
  */
 
 /**
- * Default short-term multiplier tiers, applied to base unfurnished rent.
+ * Short-term multiplier tiers, applied to base unfurnished rent. Locked: the
+ * intake form shows this schedule read-only and the server ignores any schedule
+ * a client sends. Approved by Lou, 12 October 2026, as Alacrity's percentages:
+ * 1–2 months 40%, 3–5 months 30%, 6–9 months 25%, 10–11 months 10%, and 10%
+ * from twelve months (Fazal's call, the same band as 10–11).
  *
- * These are the DEFAULTS. Since October 2026 the schedule is editable per
- * claim on the intake form, and the schedule actually used is stored with the
- * calculation and printed on the report. Defaults approved by Lou, October
- * 2026: 1 month 90%, 2 months 80%, 3 months 70%, 4–11 months 60%, twelve
- * months and beyond no markup. Editable per claim.
+ * Changing a value here moves only claims created after the change. Stored
+ * calculations keep the schedule they were locked with.
  */
 export const MULTIPLIER_TIERS: readonly MultiplierTier[] = [
-  { maxMonths: 1, multiplier: 1.9 },
-  { maxMonths: 2, multiplier: 1.8 },
-  { maxMonths: 3, multiplier: 1.7 },
-  { maxMonths: 11, multiplier: 1.6 },
-  { maxMonths: Infinity, multiplier: 1.0 },
+  { maxMonths: 2, multiplier: 1.4 },
+  { maxMonths: 5, multiplier: 1.3 },
+  { maxMonths: 9, multiplier: 1.25 },
+  { maxMonths: 11, multiplier: 1.1 },
+  { maxMonths: Infinity, multiplier: 1.1 },
 ];
 
 /**
@@ -90,15 +91,15 @@ export const RADIUS_BANDS = {
 } as const;
 
 /**
- * Radii the operator can choose for "Find comparables", in miles. The first
- * is the default. Steps past RADIUS_BANDS.needsJustification (5 mi) are the
- * extended band: a comp from there is shown with a red hue as a cue and is
- * permitted up to RADIUS_BANDS.limit. Widening is a deliberate click, never
- * automatic (October 2026).
+ * Radii the operator can choose for "Find comparables", in miles, as Lou asked
+ * (12 October 2026). The first is the default. Steps past
+ * RADIUS_BANDS.needsJustification (5 mi) are the extended band: a comp from
+ * there is shown with a red hue as a cue and is permitted up to
+ * RADIUS_BANDS.limit. Widening is a deliberate click, never automatic.
  */
-export const SEARCH_RADIUS_STEPS = [2.5, 3, 4, 5, 10, 25, 50, 100] as const;
+export const SEARCH_RADIUS_STEPS = [5, 10, 25, 50] as const;
 export type SearchRadiusMiles = (typeof SEARCH_RADIUS_STEPS)[number];
-export const DEFAULT_SEARCH_RADIUS_MILES: SearchRadiusMiles = 2.5;
+export const DEFAULT_SEARCH_RADIUS_MILES: SearchRadiusMiles = 5;
 
 /**
  * Title and description keywords that mark a listing as short-term furnished

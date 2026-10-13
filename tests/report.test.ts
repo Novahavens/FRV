@@ -85,11 +85,11 @@ describe('printed reference tables', () => {
     ]);
   });
 
-  it('prints the current defaults, half-points included, when a claim uses them', () => {
+  it('prints the locked defaults when a claim carries no schedule of its own', () => {
     const { multiplierTiers: _omit, ...plain } = loss;
     const current = buildReportModel(plain, calculateFrv(plain, [comp('c1', 3_835_00, 2250), comp('c2', 3_600_00, 2100), comp('c3', 3_200_00, 1900)]));
-    expect(current.multiplierTable.map((r) => r.value)).toEqual(['90%', '80%', '70%', '60%', 'No markup']);
-    expect(current.multiplierTable.map((r) => r.label)).toEqual(['1 month', '2 months', '3 months', '4–11 months', '12+ months']);
+    expect(current.multiplierTable.map((r) => r.value)).toEqual(['40%', '30%', '25%', '10%', '10%']);
+    expect(current.multiplierTable.map((r) => r.label)).toEqual(['1–2 months', '3–5 months', '6–9 months', '10–11 months', '12+ months']);
     expect(current.multiplierTable).toHaveLength(MULTIPLIER_TIERS.length);
   });
 

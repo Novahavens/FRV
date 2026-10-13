@@ -244,3 +244,26 @@ What did not change:
 
 - Locked reports. They render from stored figures, so a report locked before this change still shows its fee row and its original total. Only new claims are affected.
 - The reference fixtures. Coppell ($6,448.50) and Camarillo ($10,145) pass the fee their PRD reports carried, so the arithmetic regression still holds. The engine still honours a fee when one is supplied; it simply is never supplied now.
+
+---
+
+## Multipliers locked to Alacrity's percentages; search radius 5–50 miles (October 2026)
+
+Fazal, 12 October 2026, from Lou's review of a live claim. Lou's email set the percentages and the radius options. Two points were Fazal's call, not Lou's, and need confirming with her: the 12-month rate and the default radius.
+
+**Multipliers are locked.** The figures below replace the schedule from the entry above, and replace its per-claim editing.
+
+| Approved term | Markup | Multiplier |
+|:--|--:|--:|
+| 1–2 months | 40% | × 1.40 |
+| 3–5 months | 30% | × 1.30 |
+| 6–9 months | 25% | × 1.25 |
+| 10–11 months | 10% | × 1.10 |
+| 12+ months | 10% | × 1.10 |
+
+- **Why locked.** Lou asked that the percentages not be changed by the account manager. The per-claim editor let each claim carry its own schedule, which is exactly what she asked to stop.
+- **How it is enforced.** The form shows the schedule read-only. The server ignores any multiplier schedule a client sends, so the schedule cannot be changed from the browser. `calculateFrv` still accepts an override in code, for engine tests and legacy rows only.
+- **The 12-month rate.** Lou's email did not cover 12 months. Fazal set it at 10%, the same as the 10–11 month band. This needs confirming with Lou.
+- **Locked claims keep their schedule.** A claim locked earlier still prints the schedule it was locked with. Only new claims pick up this one.
+
+**Search radius is 5, 10, 25 or 50 miles, default 5.** The picker and the nudge ladder both stop at 50. Rule 4's 100-mile limit is unchanged in the engine, so a comp found at 50 miles or less is still judged by Rule 4. A 5-mile search now queries the ZIP and the city together, which costs about two extra Firecrawl calls per search compared with the old 2.5-mile default (ZIP only).
