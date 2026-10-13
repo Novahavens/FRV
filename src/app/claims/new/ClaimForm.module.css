@@ -123,7 +123,33 @@ button.findReady:hover:not(:disabled) .findGlow::before { opacity: 0.9; }
   75% { transform: translate(24px, 0) rotate(270deg); }
   100% { transform: translate(0, 0) rotate(360deg); }
 }
+/*
+ * The laser: a bright neon comet that circles the pill's edge. A rotating conic
+ * gradient is masked down to a hairline ring, so only the border lights up.
+ */
+.findLaser {
+  position: absolute; z-index: 3; inset: -1px; border-radius: inherit; pointer-events: none;
+  padding: 1.5px;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg,
+    transparent 230deg,
+    var(--neon-violet) 280deg,
+    var(--neon-pink) 310deg,
+    var(--neon-cyan) 335deg,
+    #ffffff 352deg,
+    transparent 360deg
+  );
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+  filter: drop-shadow(0 0 4px var(--neon-cyan)) drop-shadow(0 0 8px var(--neon-pink));
+  animation: findLaserSpin 2.6s linear infinite;
+}
+@keyframes findLaserSpin {
+  to { transform: rotate(360deg); }
+}
 @media (prefers-reduced-motion: reduce) {
   button.findReady, button.findReady:hover:not(:disabled) { transition: none; transform: none; }
-  .findGlow::before { animation: none; }
+  .findGlow::before, .findLaser { animation: none; }
 }

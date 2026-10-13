@@ -359,6 +359,7 @@ export function ClaimForm({ accountManagers }: { accountManagers: AccountManager
             <Button type="button" variant="secondary" onClick={findComps} disabled={!canSearch} loading={searching}
               id="find-comps" className={readyToSearch ? styles.findReady : undefined}>
               {readyToSearch && <span className={styles.findGlow} aria-hidden="true" />}
+              {readyToSearch && <span className={styles.findLaser} aria-hidden="true" />}
               <span className={readyToSearch ? styles.findLabel : undefined}>
                 {searching ? 'Searching' : search ? 'Search again' : 'Find comps'}
               </span>
