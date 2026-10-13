@@ -354,8 +354,9 @@ export function ClaimForm({ accountManagers }: { accountManagers: AccountManager
 
           <div className={styles.findRow}>
             <RadiusPicker value={radius} onChange={setRadius} disabled={searching} />
+            {/* Lit up only when it can be clicked: the disabled state stays the plain secondary button. */}
             <Button type="button" variant="secondary" onClick={findComps} disabled={!canSearch} loading={searching}
-              id="find-comps">
+              id="find-comps" className={canSearch && !searching ? styles.findReady : undefined}>
               {searching ? 'Searching' : search ? 'Search again' : 'Find comps'}
             </Button>
           </div>
