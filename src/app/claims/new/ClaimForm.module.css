@@ -66,46 +66,64 @@
 }
 
 /*
- * Find comps, once it can be clicked: a neon gradient glass button. The palette
- * lives here, not in globals.css, because the tokens file is generated from the
- * design system and must not be hand-edited. Disabled keeps the plain secondary.
+ * Find comps, once it can be clicked: the Maccess Glass Button from 21st.dev
+ * (by Meng To, MIT licence), ported from its Tailwind source to this stylesheet.
+ * A frosted dark pill with a rotating glow. The glow is tinted violet, pink and
+ * cyan so it reads as neon. The palette lives here, not in globals.css, because
+ * the tokens file is generated and must not be hand-edited. Disabled keeps the
+ * plain secondary button.
  */
-.findReady {
+button.findReady {
   --neon-violet: #7c3aed;
   --neon-pink: #ec4899;
   --neon-cyan: #22d3ee;
-  position: relative; isolation: isolate; overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.35);
-  color: #ffffff;
-  background: linear-gradient(120deg, var(--neon-violet), var(--neon-pink), var(--neon-cyan), var(--neon-violet));
-  background-size: 300% 300%;
-  animation: findSheen 6s ease-in-out infinite;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.45),
-    0 8px 24px rgba(124, 58, 237, 0.4),
-    0 0 28px rgba(34, 211, 238, 0.35);
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
-  transition: transform 160ms ease, box-shadow 160ms ease;
+  position: relative; overflow: hidden; isolation: isolate;
+  height: 40px; padding: 0 var(--space-4); border: 0; border-radius: 999px;
+  color: rgba(255, 255, 255, 0.85); background: transparent;
+  font-weight: 600; cursor: pointer;
+  transition: transform 160ms ease;
 }
-/* The frosted layer: a translucent sheen over the gradient, so the button reads as glass. */
-.findReady::before {
-  content: ''; position: absolute; inset: 1px; z-index: -1; border-radius: inherit;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.28), rgba(255, 255, 255, 0.04) 55%, rgba(255, 255, 255, 0));
-  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+/* Frosted glass body. */
+button.findReady::before {
+  content: ''; position: absolute; inset: 0; border-radius: inherit;
+  backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+  background: rgba(23, 23, 23, 0.7);
+  box-shadow: rgba(255, 255, 255, 0.06) 2px 4px 16px inset;
 }
-.findReady:hover {
-  transform: translateY(-1px);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.55),
-    0 12px 32px rgba(236, 72, 153, 0.45),
-    0 0 40px rgba(34, 211, 238, 0.5);
+/* Hairline rim, faded toward the bottom. */
+button.findReady::after {
+  content: ''; position: absolute; inset: 0; border-radius: inherit; z-index: 2;
+  opacity: 0.25; pointer-events: none;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  mask-image: linear-gradient(170deg, #000, rgba(0, 0, 0, 0) 50%);
 }
-.findReady:focus-visible { outline: 2px solid var(--accent-base); outline-offset: 3px; }
-.findReady:active { transform: translateY(0); }
-@keyframes findSheen {
-  0%, 100% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
+button.findReady:hover:not(:disabled) { transform: translateY(-1px); }
+button.findReady:active:not(:disabled) { transform: scale(0.98); }
+button.findReady:focus-visible { outline: 2px solid var(--accent-base); outline-offset: 3px; }
+/* Label sits above the glass layers. */
+.findLabel { position: relative; z-index: 4; }
+/* The rotating neon glow, clipped to the pill. */
+.findGlow {
+  position: absolute; z-index: 3; width: 160px; height: 160px;
+  top: calc(50% - 80px); left: calc(50% - 80px); pointer-events: none;
+}
+.findGlow::before {
+  content: ''; position: absolute; inset: 0; border-radius: 50%;
+  filter: blur(14px);
+  background: conic-gradient(from 180deg, var(--neon-violet), var(--neon-pink), var(--neon-cyan), var(--neon-violet));
+  opacity: 0.55;
+  transition: opacity 0.5s;
+  animation: findOrbit 3.6s linear infinite;
+}
+button.findReady:hover:not(:disabled) .findGlow::before { opacity: 0.9; }
+@keyframes findOrbit {
+  0% { transform: translate(0, 0) rotate(0deg); }
+  25% { transform: translate(-24px, 0) rotate(90deg); }
+  50% { transform: translate(0, 0) rotate(180deg); }
+  75% { transform: translate(24px, 0) rotate(270deg); }
+  100% { transform: translate(0, 0) rotate(360deg); }
 }
 @media (prefers-reduced-motion: reduce) {
-  .findReady, .findReady:hover { animation: none; transition: none; transform: none; }
+  button.findReady, button.findReady:hover:not(:disabled) { transition: none; transform: none; }
+  .findGlow::before { animation: none; }
 }
