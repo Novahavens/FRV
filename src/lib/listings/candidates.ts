@@ -61,7 +61,7 @@ export interface CandidateCriteria {
   bathroomVariance: number;
   /** Square footage tolerance as a fraction. Default SQFT_TOLERANCE (15%). */
   sqftTolerance: number;
-  /** Offer nothing farther than this. Operator-chosen; default 2.5 mi, up to Rule 4's 100-mi limit. */
+  /** Offer nothing farther than this. Operator-chosen; default 5 mi, up to Rule 4's 100-mi limit. */
   radiusMiles: number;
 }
 

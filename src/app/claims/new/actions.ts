@@ -6,10 +6,8 @@ import {
   MAX_LOSS_BEDROOMS,
   SEARCH_RADIUS_STEPS,
   calculateFrv,
-  tiersFromStored,
   tiersToStored,
   type Comp,
-  type LossProperty,
 } from '@/lib/frv';
 import { db } from '@/lib/db/client';
 import { isConfigured } from '@/lib/env';
@@ -48,12 +46,6 @@ const payloadSchema = z.object({
   termMonths: z.number().int().min(1).max(60),
   preparedBy: z.string().min(2, 'Your name goes on the audit trail.'),
   justification: z.string().optional(),
-  /** The multiplier schedule, if the operator changed it from the defaults. */
-  multiplierTiers: z
-    .array(z.object({ maxMonths: z.number().int().positive().nullable(), multiplier: z.number().min(1).max(5) }))
-    .min(1)
-    .max(8)
-    .optional(),
   comps: z.array(compSchema).length(3, 'An FRV needs exactly three comps.'),
 });
 
@@ -68,21 +60,14 @@ export async function submitFrv(_prev: SubmitState, formData: FormData): Promise
     return { error: parsed.error.issues.map((i) => i.message).join(' ') };
   }
 
-  const { comps: compInput, preparedBy, justification, multiplierTiers: tiersInput, ...lossInput } = parsed.data;
+  // The multiplier schedule is locked: the server always uses MULTIPLIER_TIERS, never a client-sent one.
+  const { comps: compInput, preparedBy, justification, ...loss } = parsed.data;
 
   const managers = await listAccountManagers();
   if (!isAccountManager(preparedBy, managers)) {
     return { error: 'Choose your name from the account manager list.' };
   }
 
-  let loss: LossProperty = lossInput;
-  if (tiersInput) {
-    try {
-      loss = { ...lossInput, multiplierTiers: tiersFromStored(tiersInput) };
-    } catch (error) {
-      return { error: error instanceof Error ? error.message : 'The multiplier schedule is not valid.' };
-    }
-  }
   const comps: Comp[] = compInput.map((c, i) => ({ id: `c${i + 1}`, ...c }));
 
   // Throws ValidationFailedError if any rule blocks. The client cannot reach
