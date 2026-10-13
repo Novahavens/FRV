@@ -216,6 +216,7 @@ export function ClaimForm({ accountManagers }: { accountManagers: AccountManager
   const [filter, setFilter] = useState<CandidateFilter>(EMPTY_FILTER);
 
   const canSearch = Boolean(loss) && !searching;
+  const readyToSearch = canSearch && !searching;
   // Named on screen so the operator sees exactly which field keeps Find comps off.
   const missingForSearch = [
     !address || !lat || !lng ? 'the loss address (pick a suggestion, or leave the field to locate it)' : null,
@@ -354,9 +355,13 @@ export function ClaimForm({ accountManagers }: { accountManagers: AccountManager
 
           <div className={styles.findRow}>
             <RadiusPicker value={radius} onChange={setRadius} disabled={searching} />
+            {/* Lit up only when it can be clicked: the disabled state stays the plain secondary button. */}
             <Button type="button" variant="secondary" onClick={findComps} disabled={!canSearch} loading={searching}
-              id="find-comps">
-              {searching ? 'Searching' : search ? 'Search again' : 'Find comps'}
+              id="find-comps" className={readyToSearch ? styles.findReady : undefined}>
+              {readyToSearch && <span className={styles.findGlow} aria-hidden="true" />}
+              <span className={readyToSearch ? styles.findLabel : undefined}>
+                {searching ? 'Searching' : search ? 'Search again' : 'Find comps'}
+              </span>
             </Button>
           </div>
 
